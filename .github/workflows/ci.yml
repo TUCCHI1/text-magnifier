@@ -46,6 +46,7 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v6
 
@@ -56,8 +57,17 @@ jobs:
 
       - run: npm ci
 
-      - run: npx playwright install chromium
+      - name: Install Playwright Browsers
+        run: npx playwright install chromium --with-deps
 
       - run: npm run build
 
-      - run: xvfb-run npx playwright test --grep-invert '手動操作'
+      - name: Run Playwright tests
+        run: xvfb-run npx playwright test --grep-invert '手動操作'
+
+      - uses: actions/upload-artifact@v6
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
