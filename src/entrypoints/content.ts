@@ -5,16 +5,23 @@ import {
   isColorKey,
   isNumber,
   isBoolean,
+  isStringOrNull,
+  isSpotlightMode,
+  hexToRgba,
 } from '../lib/spotlight';
 
 const SPOTLIGHT_ID = 'reading-spotlight';
 const STYLE_ID = 'reading-spotlight-css';
+const CURSOR_HIDE_CLASS = 'reading-spotlight-cursor-hidden';
 const CENTER_DIVISOR = 2;
+const PERCENT_DIVISOR = 100;
+const CURSOR_HIDE_DELAY_MS = 1000;
 
 const state = {
   config: { ...DEFAULT_CONFIG } as SpotlightConfig,
   element: null as HTMLDivElement | null,
   animationFrameId: null as number | null,
+  cursorHideTimerId: null as number | null,
   lastMouseX: 0,
   lastMouseY: 0,
   hasMousePosition: false,
@@ -29,8 +36,9 @@ const buildCSS = () => {
       border-radius: 4px;
       box-shadow: 0 0 0 200vmax rgba(0, 0, 0, var(--dim, 0.25));
       background: var(--color, ${PRESET_COLORS.yellow});
-      transition: top 0.04s ease-out, left 0.04s ease-out;
-      will-change: top, left;
+    }
+    .${CURSOR_HIDE_CLASS}, .${CURSOR_HIDE_CLASS} * {
+      cursor: none !important;
     }
   `;
 };
@@ -50,8 +58,17 @@ const parseConfig = (data: Record<string, unknown>) => {
   if (isColorKey(data.color)) {
     parts.push({ color: data.color });
   }
+  if (isStringOrNull(data.customColor)) {
+    parts.push({ customColor: data.customColor });
+  }
   if (isBoolean(data.enabled)) {
     parts.push({ enabled: data.enabled });
+  }
+  if (isSpotlightMode(data.mode)) {
+    parts.push({ mode: data.mode });
+  }
+  if (isNumber(data.fixedYPercent)) {
+    parts.push({ fixedYPercent: data.fixedYPercent });
   }
 
   return Object.assign({}, ...parts);
@@ -106,14 +123,42 @@ const subscribeToStorageChanges = () => {
     }
 
     const wasEnabled = state.config.enabled;
+    const previousMode = state.config.mode;
     state.config = { ...state.config, ...updates };
 
     if (wasEnabled && !state.config.enabled) {
       removeSpotlight();
-    } else if (!wasEnabled && state.config.enabled && state.hasMousePosition) {
+      showCursor();
+      return;
+    }
+
+    if (!wasEnabled && state.config.enabled && state.hasMousePosition) {
       updateSpotlightPosition(state.lastMouseX, state.lastMouseY);
-    } else if (state.element) {
+      if (state.config.mode === 'reading') {
+        scheduleCursorHide();
+      }
+      return;
+    }
+
+    const modeChanged = previousMode !== state.config.mode;
+    const fixedYChanged = updates.fixedYPercent !== undefined;
+
+    if (modeChanged) {
+      if (state.config.mode === 'reading') {
+        if (state.hasMousePosition) {
+          updateSpotlightPosition(state.lastMouseX, state.lastMouseY);
+          scheduleCursorHide();
+        }
+        return;
+      }
+      showCursor();
+    }
+
+    if (state.element) {
       applyStyle(state.element);
+      if (modeChanged || fixedYChanged) {
+        updateSpotlightPosition(state.lastMouseX, state.lastMouseY);
+      }
     }
   });
 };
@@ -140,13 +185,20 @@ const createSpotlightElement = () => {
   return element;
 };
 
+const getColorValue = (color: string, customColor: string | null): string => {
+  if (customColor) {
+    return hexToRgba(customColor);
+  }
+  return PRESET_COLORS[color as keyof typeof PRESET_COLORS];
+};
+
 const applyStyle = (element: HTMLDivElement) => {
-  const { width, height, dimOpacity, color } = state.config;
+  const { width, height, dimOpacity, color, customColor } = state.config;
 
   element.style.width = `${width}px`;
   element.style.height = `${height}px`;
   element.style.setProperty('--dim', String(dimOpacity));
-  element.style.setProperty('--color', PRESET_COLORS[color]);
+  element.style.setProperty('--color', getColorValue(color, customColor));
 };
 
 const getOrCreateSpotlight = () => {
@@ -163,6 +215,33 @@ const removeSpotlight = () => {
   }
 };
 
+const clearCursorHideTimer = () => {
+  if (state.cursorHideTimerId !== null) {
+    clearTimeout(state.cursorHideTimerId);
+    state.cursorHideTimerId = null;
+  }
+};
+
+const showCursor = () => {
+  clearCursorHideTimer();
+  document.body.classList.remove(CURSOR_HIDE_CLASS);
+};
+
+const hideCursor = () => {
+  document.body.classList.add(CURSOR_HIDE_CLASS);
+};
+
+const scheduleCursorHide = () => {
+  clearCursorHideTimer();
+  state.cursorHideTimerId = window.setTimeout(hideCursor, CURSOR_HIDE_DELAY_MS);
+};
+
+const calculateReadingModeY = (): number => {
+  const viewportHeight = window.innerHeight;
+  const targetY = (viewportHeight * state.config.fixedYPercent) / PERCENT_DIVISOR;
+  return targetY - state.config.height / CENTER_DIVISOR;
+};
+
 const updateSpotlightPosition = (mouseX: number, mouseY: number) => {
   if (!state.config.enabled) {
     return;
@@ -170,16 +249,26 @@ const updateSpotlightPosition = (mouseX: number, mouseY: number) => {
 
   const element = getOrCreateSpotlight();
   const left = mouseX - state.config.width / CENTER_DIVISOR;
-  const top = mouseY - state.config.height / CENTER_DIVISOR;
 
-  element.style.left = `${left}px`;
-  element.style.top = `${top}px`;
+  if (state.config.mode === 'reading') {
+    element.style.left = `${left}px`;
+    element.style.top = `${calculateReadingModeY()}px`;
+  } else {
+    const top = mouseY - state.config.height / CENTER_DIVISOR;
+    element.style.left = `${left}px`;
+    element.style.top = `${top}px`;
+  }
 };
 
 const onMouseMove = (event: MouseEvent) => {
   state.lastMouseX = event.clientX;
   state.lastMouseY = event.clientY;
   state.hasMousePosition = true;
+
+  if (state.config.mode === 'reading' && state.config.enabled) {
+    showCursor();
+    scheduleCursorHide();
+  }
 
   if (state.animationFrameId !== null) {
     return;
@@ -196,12 +285,22 @@ const onMouseLeave = () => {
     cancelAnimationFrame(state.animationFrameId);
     state.animationFrameId = null;
   }
-  removeSpotlight();
+  showCursor();
+  if (state.config.mode !== 'reading') {
+    removeSpotlight();
+  }
+};
+
+const onWindowResize = () => {
+  if (state.config.mode === 'reading' && state.element && state.config.enabled) {
+    state.element.style.top = `${calculateReadingModeY()}px`;
+  }
 };
 
 const onVisibilityChange = () => {
   if (document.hidden) {
     removeSpotlight();
+    showCursor();
   }
 };
 
@@ -213,6 +312,7 @@ const initialize = async () => {
   document.addEventListener('mousemove', onMouseMove, { passive: true });
   document.addEventListener('mouseleave', onMouseLeave);
   document.addEventListener('visibilitychange', onVisibilityChange);
+  window.addEventListener('resize', onWindowResize, { passive: true });
 };
 
 initialize();
