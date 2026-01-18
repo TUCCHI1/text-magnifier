@@ -45,6 +45,13 @@ const MAGNIFIER_CLASS = 'text-magnifier-word';
 const MAGNIFIED_CLASS = 'magnified';
 
 /**
+ * scale(1.5)で50%拡大 → 左右それぞれ25%の余白が必要
+ * ただし完全に25%だとピッタリすぎるので、少し余裕を持たせる
+ */
+const SCALE_FACTOR = 1.5;
+const MARGIN_RATIO = (SCALE_FACTOR - 1) / 2 + 0.05;
+
+/**
  * 日本語・韓国語・中国語を含む多言語対応のため、
  * ASCII以外のUnicode範囲も単語文字として認識する
  */
@@ -175,10 +182,13 @@ const applyMagnification = (textNode: Node, range: WordRange) => {
   (textNode as ChildNode).replaceWith(fragment);
 
   /**
-   * offsetHeightの参照でリフローを強制発生させることで、
-   * 直後のクラス追加によるCSSトランジションを確実に発火させる
+   * 単語の実際の幅に基づいてマージンを計算することで、
+   * 長い単語でも短い単語でも隣接テキストと重ならない
    */
-  void wrapper.offsetHeight;
+  const wordWidth = wrapper.offsetWidth;
+  const margin = Math.ceil(wordWidth * MARGIN_RATIO);
+  wrapper.style.setProperty('--magnifier-margin', `${margin}px`);
+
   wrapper.classList.add(MAGNIFIED_CLASS);
 
   return wrapper;

@@ -14,5 +14,5 @@
 
 .text-magnifier-word.magnified {
   transform: scale(1.5);
-  margin: 0 0.25em;
+  margin: 0 var(--magnifier-margin, 0.25em);
 }
