@@ -41,10 +41,14 @@ interface TextCaretPosition {
   const getWordBoundaries = (text: string, offset: number): WordBoundaries | null => {
     const boundaries: WordBoundaries = { start: offset, end: offset };
 
-    while (boundaries.start > 0 && WORD_PATTERN.test(text[boundaries.start - 1])) {
+    while (boundaries.start > 0) {
+      const char = text[boundaries.start - 1];
+      if (char === undefined || !WORD_PATTERN.test(char)) break;
       boundaries.start--;
     }
-    while (boundaries.end < text.length && WORD_PATTERN.test(text[boundaries.end])) {
+    while (boundaries.end < text.length) {
+      const char = text[boundaries.end];
+      if (char === undefined || !WORD_PATTERN.test(char)) break;
       boundaries.end++;
     }
 

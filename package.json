@@ -2,7 +2,11 @@
   "name": "text-magnifier",
   "version": "1.0.0",
   "description": "Chrome extension that magnifies text on hover with smooth animation",
+  "type": "module",
   "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "compile": "tsc",
