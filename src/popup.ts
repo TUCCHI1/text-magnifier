@@ -1,109 +1,109 @@
 /**
- * Text Magnifier - ポップアップUI
- *
- * 設定をchrome.storage.syncに保存し、
- * 全デバイスで同期される
+ * Reading Spotlight - Popup UI
  */
 
-interface PopupSettings {
-  mode: 'word' | 'character';
-  characterCount: number;
-  scaleFactor: number;
+// =============================================================================
+// Types
+// =============================================================================
+
+interface Config {
+  width: number;
+  height: number;
+  dimOpacity: number;
+  enabled: boolean;
 }
 
-const DEFAULT_SETTINGS: PopupSettings = {
-  mode: 'character',
-  characterCount: 3,
-  scaleFactor: 1.35,
+const DEFAULTS: Config = {
+  width: 600,
+  height: 32,
+  dimOpacity: 0.25,
+  enabled: true,
 };
 
 // =============================================================================
-// DOM要素
+// Elements
 // =============================================================================
 
-const modeButtons = document.querySelectorAll<HTMLButtonElement>('.mode-btn');
-const characterCountInput = document.getElementById('character-count') as HTMLInputElement;
-const characterCountValue = document.getElementById('character-count-value') as HTMLSpanElement;
-const characterCountGroup = document.querySelector('.character-count-group') as HTMLDivElement;
-const scaleInput = document.getElementById('scale') as HTMLInputElement;
-const scaleValue = document.getElementById('scale-value') as HTMLSpanElement;
+const $ = <T extends HTMLElement>(id: string): T =>
+  document.getElementById(id) as T;
 
-// =============================================================================
-// 設定の読み込み・保存
-// =============================================================================
-
-const loadSettings = async (): Promise<PopupSettings> => {
-  const keys = Object.keys(DEFAULT_SETTINGS);
-  const result = await chrome.storage.sync.get(keys);
-  return { ...DEFAULT_SETTINGS, ...result } as PopupSettings;
-};
-
-const saveSettings = async (settings: Partial<PopupSettings>) => {
-  await chrome.storage.sync.set(settings);
+const elements = {
+  enabled: $<HTMLInputElement>('enabled'),
+  width: $<HTMLInputElement>('width'),
+  widthValue: $<HTMLSpanElement>('width-value'),
+  height: $<HTMLInputElement>('height'),
+  heightValue: $<HTMLSpanElement>('height-value'),
+  dimOpacity: $<HTMLInputElement>('dimOpacity'),
+  dimValue: $<HTMLSpanElement>('dim-value'),
 };
 
 // =============================================================================
-// UIの更新
+// Storage
 // =============================================================================
 
-const updateModeUI = (mode: PopupSettings['mode']) => {
-  modeButtons.forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset['mode'] === mode);
-  });
-
-  // 文字数モードでない場合は文字数設定を無効化
-  characterCountGroup.classList.toggle('disabled', mode !== 'character');
+const load = async (): Promise<Config> => {
+  const stored = await chrome.storage.sync.get(Object.keys(DEFAULTS));
+  return { ...DEFAULTS, ...stored };
 };
 
-const updateCharacterCountUI = (count: number) => {
-  characterCountInput.value = String(count);
-  characterCountValue.textContent = String(count);
-};
-
-const updateScaleUI = (scale: number) => {
-  scaleInput.value = String(scale);
-  scaleValue.textContent = `${scale}x`;
-};
+const save = (updates: Partial<Config>): Promise<void> =>
+  chrome.storage.sync.set(updates);
 
 // =============================================================================
-// イベントハンドラ
+// UI
 // =============================================================================
 
-const handleModeChange = (mode: PopupSettings['mode']) => {
-  updateModeUI(mode);
-  saveSettings({ mode });
-};
+const updateUI = (config: Config): void => {
+  elements.enabled.checked = config.enabled;
 
-const handleCharacterCountChange = () => {
-  const count = Number(characterCountInput.value);
-  updateCharacterCountUI(count);
-  saveSettings({ characterCount: count });
-};
+  elements.width.value = String(config.width);
+  elements.widthValue.textContent = `${config.width}px`;
 
-const handleScaleChange = () => {
-  const scale = Number(scaleInput.value);
-  updateScaleUI(scale);
-  saveSettings({ scaleFactor: scale });
+  elements.height.value = String(config.height);
+  elements.heightValue.textContent = `${config.height}px`;
+
+  elements.dimOpacity.value = String(config.dimOpacity);
+  elements.dimValue.textContent = `${Math.round(config.dimOpacity * 100)}%`;
 };
 
 // =============================================================================
-// 初期化
+// Event Handlers
 // =============================================================================
 
-(async () => {
-  const settings = await loadSettings();
+const handleEnabledChange = (): void => {
+  save({ enabled: elements.enabled.checked });
+};
 
-  updateModeUI(settings.mode);
-  updateCharacterCountUI(settings.characterCount);
-  updateScaleUI(settings.scaleFactor);
+const handleWidthChange = (): void => {
+  const width = Number(elements.width.value);
+  elements.widthValue.textContent = `${width}px`;
+  save({ width });
+};
 
-  modeButtons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const mode = btn.dataset['mode'] as PopupSettings['mode'];
-      handleModeChange(mode);
-    });
-  });
+const handleHeightChange = (): void => {
+  const height = Number(elements.height.value);
+  elements.heightValue.textContent = `${height}px`;
+  save({ height });
+};
 
-  characterCountInput.addEventListener('input', handleCharacterCountChange);
-  scaleInput.addEventListener('input', handleScaleChange);
-})();
+const handleDimChange = (): void => {
+  const dimOpacity = Number(elements.dimOpacity.value);
+  elements.dimValue.textContent = `${Math.round(dimOpacity * 100)}%`;
+  save({ dimOpacity });
+};
+
+// =============================================================================
+// Initialize
+// =============================================================================
+
+const init = async (): Promise<void> => {
+  const config = await load();
+  updateUI(config);
+
+  elements.enabled.addEventListener('change', handleEnabledChange);
+  elements.width.addEventListener('input', handleWidthChange);
+  elements.height.addEventListener('input', handleHeightChange);
+  elements.dimOpacity.addEventListener('input', handleDimChange);
+};
+
+init();

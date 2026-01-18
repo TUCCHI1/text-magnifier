@@ -1,397 +1,202 @@
 /**
- * Text Magnifier - Chrome拡張機能
+ * Reading Spotlight - Chrome Extension
  *
- * 長文を読む際にカーソル位置を見失いやすい問題を解決するため、
- * ホバー中の単語を視覚的に強調表示する
+ * マウス位置にスポットライトを当て、周囲をディムすることで
+ * 読んでいる行に集中させる。CHI 2023研究で最も好まれた「Lightbox」デザイン。
+ *
+ * @see https://dl.acm.org/doi/10.1145/3544548.3581367
  */
 
 // =============================================================================
-// 型定義
+// Types
 // =============================================================================
 
-type MagnificationMode = 'word' | 'character';
-
-interface MagnifierConfig {
-  mode: MagnificationMode;
-  characterCount: number;
-  scaleFactor: number;
+interface SpotlightConfig {
+  readonly width: number;
+  readonly height: number;
+  readonly dimOpacity: number;
+  readonly enabled: boolean;
 }
 
-interface MagnifierState {
-  wrapper: HTMLSpanElement | null;
-  animationFrameId: number | null;
-  lastChangeTime: number;
-}
-
-/**
- * 拡大対象の切替後、次の切替まで待機する時間（ミリ秒）
- * これにより、マウスを横に動かしたときのブルブルを防ぐ
- */
-const CHANGE_COOLDOWN_MS = 150;
-
-interface TextRange {
-  start: number;
-  end: number;
-}
-
-interface CaretInfo {
-  node: Node;
-  offset: number;
+interface Position {
+  readonly x: number;
+  readonly y: number;
 }
 
 // =============================================================================
-// 設定
+// Constants
 // =============================================================================
 
-const DEFAULT_CONFIG: MagnifierConfig = {
-  mode: 'character',
-  characterCount: 3,
-  scaleFactor: 1.35,
-};
+const SPOTLIGHT_ID = 'reading-spotlight-element' as const;
+const CSS_ID = 'reading-spotlight-styles' as const;
 
-/**
- * chrome.storage.syncから設定を読み込み、リアルタイムで同期
- * storageが利用できない環境ではデフォルト値を使用
- */
-const config: MagnifierConfig = { ...DEFAULT_CONFIG };
+const DEFAULT_CONFIG: SpotlightConfig = {
+  width: 600,
+  height: 32,
+  dimOpacity: 0.25,
+  enabled: true,
+} as const;
 
-const loadConfig = async () => {
-  if (typeof chrome === 'undefined' || !chrome.storage) return;
+const SPOTLIGHT_CSS = `
+  #${SPOTLIGHT_ID} {
+    position: fixed;
+    pointer-events: none;
+    z-index: 2147483647;
+    border-radius: 4px;
+    box-shadow: 0 0 0 200vmax rgba(0, 0, 0, var(--dim-opacity, 0.25));
+    background: transparent;
+    transition:
+      top 0.04s cubic-bezier(0.33, 1, 0.68, 1),
+      left 0.04s cubic-bezier(0.33, 1, 0.68, 1);
+    will-change: top, left;
+  }
+` as const;
+
+// =============================================================================
+// State
+// =============================================================================
+
+let config: SpotlightConfig = { ...DEFAULT_CONFIG };
+let spotlightElement: HTMLDivElement | null = null;
+let rafId: number | null = null;
+
+// =============================================================================
+// Storage
+// =============================================================================
+
+const loadConfig = async (): Promise<void> => {
+  if (typeof chrome === 'undefined' || !chrome.storage?.sync) return;
 
   try {
-    const keys = Object.keys(DEFAULT_CONFIG) as (keyof MagnifierConfig)[];
-    const result = await chrome.storage.sync.get(keys);
-    Object.assign(config, result);
+    const stored = await chrome.storage.sync.get(Object.keys(DEFAULT_CONFIG));
+    config = { ...DEFAULT_CONFIG, ...stored };
   } catch {
-    // storage読み込み失敗時はデフォルト値を維持
+    // Fallback to defaults on error
   }
 };
 
-const listenForConfigChanges = () => {
-  if (typeof chrome === 'undefined' || !chrome.storage) return;
+const subscribeToConfigChanges = (): void => {
+  if (typeof chrome === 'undefined' || !chrome.storage?.sync) return;
 
-  chrome.storage.onChanged.addListener((changes) => {
-    if (changes['mode']) config.mode = changes['mode'].newValue as MagnificationMode;
-    if (changes['characterCount']) config.characterCount = changes['characterCount'].newValue as number;
-    if (changes['scaleFactor']) config.scaleFactor = changes['scaleFactor'].newValue as number;
+  chrome.storage.sync.onChanged.addListener((changes) => {
+    let hasUpdates = false;
+    const newConfig = { ...config };
+
+    for (const [key, change] of Object.entries(changes)) {
+      if (key in DEFAULT_CONFIG && change.newValue !== undefined) {
+        (newConfig as Record<string, unknown>)[key] = change.newValue;
+        hasUpdates = true;
+      }
+    }
+
+    if (hasUpdates) {
+      const wasEnabled = config.enabled;
+      config = newConfig;
+
+      if (wasEnabled && !config.enabled) {
+        destroySpotlight();
+      } else if (spotlightElement) {
+        applyConfigToElement(spotlightElement);
+      }
+    }
   });
 };
 
 // =============================================================================
-// 定数
+// DOM
 // =============================================================================
 
-/**
- * フォーム要素やスクリプトなど、テキスト拡大が不適切または
- * 予期しない動作を引き起こす要素を除外するため
- */
-const EXCLUDED_TAGS = new Set([
-  'input',
-  'textarea',
-  'script',
-  'style',
-  'noscript',
-  'svg',
-]);
+const injectStyles = (): void => {
+  if (document.getElementById(CSS_ID)) return;
 
-const MAGNIFIER_CLASS = 'text-magnifier-word';
-const MAGNIFIED_CLASS = 'magnified';
-
-/**
- * 日本語・韓国語・中国語を含む多言語対応のため、
- * ASCII以外のUnicode範囲も単語文字として認識する
- */
-const WORD_CHARACTER_PATTERN = /[\w\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\uAC00-\uD7AF]/;
-
-// =============================================================================
-// 状態
-// =============================================================================
-
-const state: MagnifierState = {
-  wrapper: null,
-  animationFrameId: null,
-  lastChangeTime: 0,
+  const style = document.createElement('style');
+  style.id = CSS_ID;
+  style.textContent = SPOTLIGHT_CSS;
+  document.head.appendChild(style);
 };
 
-// =============================================================================
-// DOMユーティリティ
-// =============================================================================
+const createSpotlight = (): HTMLDivElement => {
+  const el = document.createElement('div');
+  el.id = SPOTLIGHT_ID;
+  applyConfigToElement(el);
+  document.body.appendChild(el);
+  return el;
+};
 
-const createTextNode = (text: string) => document.createTextNode(text);
+const applyConfigToElement = (el: HTMLDivElement): void => {
+  el.style.width = `${config.width}px`;
+  el.style.height = `${config.height}px`;
+  el.style.setProperty('--dim-opacity', String(config.dimOpacity));
+};
 
-const isWordCharacter = (char: string | undefined) =>
-  char !== undefined && WORD_CHARACTER_PATTERN.test(char);
+const destroySpotlight = (): void => {
+  spotlightElement?.remove();
+  spotlightElement = null;
+};
 
-/**
- * ブラウザ間の互換性を確保するため、W3C標準APIを優先し、
- * 未対応ブラウザ（Chrome/Safari）では独自APIにフォールバック
- */
-const getCaretInfoAtPoint = (x: number, y: number): CaretInfo | null => {
-  if (document.caretPositionFromPoint) {
-    const position = document.caretPositionFromPoint(x, y);
-    if (!position) return null;
-
-    return {
-      node: position.offsetNode,
-      offset: position.offset,
-    };
+const ensureSpotlight = (): HTMLDivElement => {
+  if (!spotlightElement) {
+    spotlightElement = createSpotlight();
   }
-
-  const range = document.caretRangeFromPoint(x, y);
-  if (!range) return null;
-
-  return {
-    node: range.startContainer,
-    offset: range.startOffset,
-  };
+  return spotlightElement;
 };
 
 // =============================================================================
-// 要素の検証
+// Position
 // =============================================================================
 
-const isExcludedElement = (element: Element | null) => {
-  if (!element) return true;
+const updatePosition = ({ x, y }: Position): void => {
+  if (!config.enabled) return;
 
-  const tagName = element.tagName.toLowerCase();
-  if (EXCLUDED_TAGS.has(tagName)) return true;
+  const el = ensureSpotlight();
 
-  // 編集可能要素では入力の邪魔になるため除外
-  if (element instanceof HTMLElement && element.isContentEditable) return true;
+  // Center the spotlight on cursor position
+  const left = x - config.width / 2;
+  const top = y - config.height / 2;
 
-  // 既にラップ済みの要素を再処理すると無限ループになるため除外
-  if (element.closest(`.${MAGNIFIER_CLASS}`)) return true;
-
-  return false;
-};
-
-const isValidTextNode = (node: Node) =>
-  node.nodeType === Node.TEXT_NODE && !isExcludedElement(node.parentElement);
-
-// =============================================================================
-// 範囲検出
-// =============================================================================
-
-/**
- * 単語モード: 英語はスペース区切り、日本語は連続文字をまとめて検出
- */
-const findWordRange = (text: string, offset: number): TextRange | null => {
-  let start = offset;
-  let end = offset;
-
-  while (start > 0 && isWordCharacter(text[start - 1])) {
-    start--;
-  }
-
-  while (end < text.length && isWordCharacter(text[end])) {
-    end++;
-  }
-
-  if (start === end) return null;
-
-  return { start, end };
-};
-
-/**
- * 文字数モード: カーソル位置を中心にN文字を選択
- * 日本語のように単語境界が曖昧な言語で有効
- */
-const findCharacterRange = (
-  text: string,
-  offset: number,
-  count: number
-): TextRange | null => {
-  // 空白や記号の上にカーソルがある場合は無視
-  if (!isWordCharacter(text[offset]) && !isWordCharacter(text[offset - 1])) {
-    return null;
-  }
-
-  // カーソル位置を中心に前後に広げる
-  const half = Math.floor(count / 2);
-  let start = Math.max(0, offset - half);
-  let end = Math.min(text.length, start + count);
-
-  // 末尾に達した場合は開始位置を調整
-  if (end === text.length && end - start < count) {
-    start = Math.max(0, end - count);
-  }
-
-  if (start === end) return null;
-
-  return { start, end };
-};
-
-const findRange = (text: string, offset: number): TextRange | null => {
-  if (config.mode === 'character') {
-    return findCharacterRange(text, offset, config.characterCount);
-  }
-  return findWordRange(text, offset);
-};
-
-const extractText = (text: string, range: TextRange) =>
-  text.substring(range.start, range.end);
-
-// =============================================================================
-// DOM操作
-// =============================================================================
-
-const removeMagnification = () => {
-  const { wrapper } = state;
-  if (!wrapper?.parentNode) return;
-
-  const originalText = wrapper.textContent ?? '';
-  wrapper.replaceWith(createTextNode(originalText));
-  state.wrapper = null;
-};
-
-const applyMagnification = (textNode: Node, range: TextRange) => {
-  const fullText = textNode.textContent ?? '';
-  const targetText = extractText(fullText, range);
-
-  const wrapper = document.createElement('span');
-  wrapper.className = MAGNIFIER_CLASS;
-  wrapper.textContent = targetText;
-
-  /**
-   * DocumentFragmentを使用することで、DOM操作を1回にまとめ、
-   * リフローの発生回数を最小化してパフォーマンスを向上させる
-   */
-  const fragment = document.createDocumentFragment();
-
-  const textBefore = fullText.substring(0, range.start);
-  const textAfter = fullText.substring(range.end);
-
-  if (textBefore) fragment.appendChild(createTextNode(textBefore));
-  fragment.appendChild(wrapper);
-  if (textAfter) fragment.appendChild(createTextNode(textAfter));
-
-  (textNode as ChildNode).replaceWith(fragment);
-
-  /**
-   * transform: scale() は視覚的にのみ拡大し、レイアウトには影響しない
-   * そのため、拡大分のスペースをマージンで確保する
-   */
-  const textWidth = wrapper.offsetWidth;
-  const marginRatio = (config.scaleFactor - 1) / 2 + 0.05;
-  const margin = Math.ceil(textWidth * marginRatio);
-  wrapper.style.setProperty('--magnifier-margin', `${margin}px`);
-  wrapper.style.setProperty('--magnifier-scale', `${config.scaleFactor}`);
-
-  /**
-   * offsetHeightの参照でリフローを強制発生させることで、
-   * 直後のクラス追加によるCSSトランジションを確実に発火させる
-   */
-  void wrapper.offsetHeight;
-
-  wrapper.classList.add(MAGNIFIED_CLASS);
-
-  return wrapper;
+  el.style.left = `${left}px`;
+  el.style.top = `${top}px`;
 };
 
 // =============================================================================
-// コアロジック
+// Event Handlers
 // =============================================================================
 
-/**
- * 現在拡大中の要素の上にマウスがあるかチェック
- * これにより、同じ要素上でマウスを動かしてもアニメーションが再発火しない
- */
-const isMouseOverMagnified = (x: number, y: number) => {
-  if (!state.wrapper) return false;
+const handleMouseMove = (event: MouseEvent): void => {
+  if (rafId !== null) return;
 
-  const rect = state.wrapper.getBoundingClientRect();
-
-  /**
-   * font-sizeアニメーション中はrectが変化するため、
-   * 拡大後の最終サイズを推定してパディングを追加
-   * (現在サイズ × scale倍率 - 現在サイズ) / 2 ≈ 現在サイズ × 0.2
-   */
-  const horizontalPadding = rect.width * 0.3;
-  const verticalPadding = rect.height * 0.3;
-
-  return (
-    x >= rect.left - horizontalPadding &&
-    x <= rect.right + horizontalPadding &&
-    y >= rect.top - verticalPadding &&
-    y <= rect.bottom + verticalPadding
-  );
-};
-
-const processPosition = (x: number, y: number) => {
-  // 現在拡大中の要素の上にいる場合は何もしない
-  if (isMouseOverMagnified(x, y)) return;
-
-  // クールダウン中は新しい拡大処理をスキップ
-  const now = Date.now();
-  if (state.wrapper && now - state.lastChangeTime < CHANGE_COOLDOWN_MS) return;
-
-  const caretInfo = getCaretInfoAtPoint(x, y);
-
-  if (!caretInfo) {
-    removeMagnification();
-    return;
-  }
-
-  const { node, offset } = caretInfo;
-
-  if (!isValidTextNode(node)) {
-    removeMagnification();
-    return;
-  }
-
-  const text = node.textContent ?? '';
-  const range = findRange(text, offset);
-
-  if (!range) {
-    removeMagnification();
-    return;
-  }
-
-  const targetText = extractText(text, range);
-
-  // 同じテキストへの不要なDOM操作を避け、パフォーマンスを維持する
-  if (state.wrapper?.textContent === targetText) return;
-
-  removeMagnification();
-  state.wrapper = applyMagnification(node, range);
-  state.lastChangeTime = now;
-};
-
-// =============================================================================
-// イベントハンドラ
-// =============================================================================
-
-/**
- * mousemoveは高頻度で発火するため、requestAnimationFrameで
- * ブラウザの描画タイミングに合わせてスロットリングする
- */
-const handleMouseMove = (event: MouseEvent) => {
-  if (state.animationFrameId !== null) return;
-
-  state.animationFrameId = requestAnimationFrame(() => {
-    state.animationFrameId = null;
-    processPosition(event.clientX, event.clientY);
+  rafId = requestAnimationFrame(() => {
+    rafId = null;
+    updatePosition({ x: event.clientX, y: event.clientY });
   });
 };
 
-const handleMouseLeave = () => {
-  if (state.animationFrameId !== null) {
-    cancelAnimationFrame(state.animationFrameId);
-    state.animationFrameId = null;
+const handleMouseLeave = (): void => {
+  if (rafId !== null) {
+    cancelAnimationFrame(rafId);
+    rafId = null;
   }
+  destroySpotlight();
+};
 
-  removeMagnification();
+const handleVisibilityChange = (): void => {
+  if (document.hidden) {
+    destroySpotlight();
+  }
 };
 
 // =============================================================================
-// 初期化
+// Initialization
 // =============================================================================
 
-(async () => {
+const bootstrap = async (): Promise<void> => {
   await loadConfig();
-  listenForConfigChanges();
+  subscribeToConfigChanges();
+  injectStyles();
 
-  // passiveオプションでスクロールパフォーマンスへの影響を防ぐ
   document.addEventListener('mousemove', handleMouseMove, { passive: true });
   document.addEventListener('mouseleave', handleMouseLeave);
-})();
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+};
+
+bootstrap();
