@@ -281,7 +281,26 @@ const applyMagnification = (textNode: Node, range: TextRange) => {
 // コアロジック
 // =============================================================================
 
+/**
+ * 現在拡大中の要素の上にマウスがあるかチェック
+ * これにより、同じ要素上でマウスを動かしてもアニメーションが再発火しない
+ */
+const isMouseOverMagnified = (x: number, y: number) => {
+  if (!state.wrapper) return false;
+
+  const rect = state.wrapper.getBoundingClientRect();
+  return (
+    x >= rect.left &&
+    x <= rect.right &&
+    y >= rect.top &&
+    y <= rect.bottom
+  );
+};
+
 const processPosition = (x: number, y: number) => {
+  // 現在拡大中の要素の上にいる場合は何もしない
+  if (isMouseOverMagnified(x, y)) return;
+
   const caretInfo = getCaretInfoAtPoint(x, y);
 
   if (!caretInfo) {
