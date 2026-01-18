@@ -1,32 +1,45 @@
-(() => {
-  'use strict';
+interface State {
+  currentWrapper: HTMLSpanElement | null;
+  rafId: number | null;
+}
 
+interface WordBoundaries {
+  start: number;
+  end: number;
+}
+
+interface TextCaretPosition {
+  node: Node;
+  offset: number;
+}
+
+(() => {
   const EXCLUDED_TAGS = new Set(['input', 'textarea', 'script', 'style', 'noscript', 'svg']);
   const WORD_PATTERN = /[\w\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\uAC00-\uD7AF]/;
 
-  const state = {
+  const state: State = {
     currentWrapper: null,
     rafId: null
   };
 
-  const unwrap = () => {
+  const unwrap = (): void => {
     if (!state.currentWrapper?.parentNode) return;
 
-    const text = state.currentWrapper.textContent;
+    const text = state.currentWrapper.textContent ?? '';
     state.currentWrapper.replaceWith(document.createTextNode(text));
     state.currentWrapper = null;
   };
 
-  const shouldExclude = (element) => {
+  const shouldExclude = (element: Element | null): boolean => {
     if (!element) return true;
-    if (EXCLUDED_TAGS.has(element.tagName?.toLowerCase())) return true;
-    if (element.isContentEditable) return true;
+    if (EXCLUDED_TAGS.has(element.tagName.toLowerCase())) return true;
+    if (element instanceof HTMLElement && element.isContentEditable) return true;
     if (element.closest('.text-magnifier-word')) return true;
     return false;
   };
 
-  const getWordBoundaries = (text, offset) => {
-    const boundaries = { start: offset, end: offset };
+  const getWordBoundaries = (text: string, offset: number): WordBoundaries | null => {
+    const boundaries: WordBoundaries = { start: offset, end: offset };
 
     while (boundaries.start > 0 && WORD_PATTERN.test(text[boundaries.start - 1])) {
       boundaries.start--;
@@ -38,8 +51,7 @@
     return boundaries.start === boundaries.end ? null : boundaries;
   };
 
-  // Standard API with fallback for Chrome
-  const getCaretPosition = (x, y) => {
+  const getCaretPosition = (x: number, y: number): TextCaretPosition | null => {
     // W3C standard (Firefox, future Chrome)
     if (document.caretPositionFromPoint) {
       const pos = document.caretPositionFromPoint(x, y);
@@ -52,8 +64,8 @@
     return { node: range.startContainer, offset: range.startOffset };
   };
 
-  const wrapWord = (textNode, boundaries) => {
-    const text = textNode.textContent;
+  const wrapWord = (textNode: Node, boundaries: WordBoundaries): HTMLSpanElement => {
+    const text = textNode.textContent ?? '';
     const word = text.substring(boundaries.start, boundaries.end);
 
     const wrapper = document.createElement('span');
@@ -70,16 +82,16 @@
       fragment.appendChild(document.createTextNode(text.substring(boundaries.end)));
     }
 
-    textNode.replaceWith(fragment);
+    (textNode as ChildNode).replaceWith(fragment);
 
     // Trigger reflow then add magnified class for animation
-    wrapper.offsetHeight;
+    void wrapper.offsetHeight;
     wrapper.classList.add('magnified');
 
     return wrapper;
   };
 
-  const processMousePosition = (x, y) => {
+  const processMousePosition = (x: number, y: number): void => {
     const caret = getCaretPosition(x, y);
 
     if (!caret) {
@@ -94,14 +106,14 @@
       return;
     }
 
-    const boundaries = getWordBoundaries(textNode.textContent, offset);
+    const boundaries = getWordBoundaries(textNode.textContent ?? '', offset);
 
     if (!boundaries) {
       unwrap();
       return;
     }
 
-    const word = textNode.textContent.substring(boundaries.start, boundaries.end);
+    const word = (textNode.textContent ?? '').substring(boundaries.start, boundaries.end);
 
     // Skip if same word is already wrapped
     if (state.currentWrapper?.textContent === word) return;
@@ -110,7 +122,7 @@
     state.currentWrapper = wrapWord(textNode, boundaries);
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = (e: MouseEvent): void => {
     if (state.rafId) return;
 
     state.rafId = requestAnimationFrame(() => {
@@ -119,7 +131,7 @@
     });
   };
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = (): void => {
     if (state.rafId) {
       cancelAnimationFrame(state.rafId);
       state.rafId = null;
