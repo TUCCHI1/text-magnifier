@@ -36,14 +36,38 @@ interface CaretInfo {
 // 設定
 // =============================================================================
 
-/**
- * 将来的にはストレージから読み込む想定
- * 現在はハードコードで切り替え可能
- */
-const CONFIG: MagnifierConfig = {
+const DEFAULT_CONFIG: MagnifierConfig = {
   mode: 'character',
   characterCount: 3,
   scaleFactor: 1.35,
+};
+
+/**
+ * chrome.storage.syncから設定を読み込み、リアルタイムで同期
+ * storageが利用できない環境ではデフォルト値を使用
+ */
+const config: MagnifierConfig = { ...DEFAULT_CONFIG };
+
+const loadConfig = async () => {
+  if (typeof chrome === 'undefined' || !chrome.storage) return;
+
+  try {
+    const keys = Object.keys(DEFAULT_CONFIG) as (keyof MagnifierConfig)[];
+    const result = await chrome.storage.sync.get(keys);
+    Object.assign(config, result);
+  } catch {
+    // storage読み込み失敗時はデフォルト値を維持
+  }
+};
+
+const listenForConfigChanges = () => {
+  if (typeof chrome === 'undefined' || !chrome.storage) return;
+
+  chrome.storage.onChanged.addListener((changes) => {
+    if (changes['mode']) config.mode = changes['mode'].newValue as MagnificationMode;
+    if (changes['characterCount']) config.characterCount = changes['characterCount'].newValue as number;
+    if (changes['scaleFactor']) config.scaleFactor = changes['scaleFactor'].newValue as number;
+  });
 };
 
 // =============================================================================
@@ -190,8 +214,8 @@ const findCharacterRange = (
 };
 
 const findRange = (text: string, offset: number): TextRange | null => {
-  if (CONFIG.mode === 'character') {
-    return findCharacterRange(text, offset, CONFIG.characterCount);
+  if (config.mode === 'character') {
+    return findCharacterRange(text, offset, config.characterCount);
   }
   return findWordRange(text, offset);
 };
@@ -240,10 +264,10 @@ const applyMagnification = (textNode: Node, range: TextRange) => {
    * 長い単語でも短い単語でも隣接テキストと重ならない
    */
   const textWidth = wrapper.offsetWidth;
-  const marginRatio = (CONFIG.scaleFactor - 1) / 2 + 0.05;
+  const marginRatio = (config.scaleFactor - 1) / 2 + 0.05;
   const margin = Math.ceil(textWidth * marginRatio);
   wrapper.style.setProperty('--magnifier-margin', `${margin}px`);
-  wrapper.style.setProperty('--magnifier-scale', `${CONFIG.scaleFactor}`);
+  wrapper.style.setProperty('--magnifier-scale', `${config.scaleFactor}`);
 
   wrapper.classList.add(MAGNIFIED_CLASS);
 
@@ -316,6 +340,11 @@ const handleMouseLeave = () => {
 // 初期化
 // =============================================================================
 
-// passiveオプションでスクロールパフォーマンスへの影響を防ぐ
-document.addEventListener('mousemove', handleMouseMove, { passive: true });
-document.addEventListener('mouseleave', handleMouseLeave);
+(async () => {
+  await loadConfig();
+  listenForConfigChanges();
+
+  // passiveオプションでスクロールパフォーマンスへの影響を防ぐ
+  document.addEventListener('mousemove', handleMouseMove, { passive: true });
+  document.addEventListener('mouseleave', handleMouseLeave);
+})();

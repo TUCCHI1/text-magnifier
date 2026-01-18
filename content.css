@@ -1,8 +1,9 @@
 .text-magnifier-word {
   display: inline-block;
-  transform: scale(1) translateY(0);
+  transform: scale(1);
   transform-origin: center bottom;
   margin: 0;
+  vertical-align: baseline;
   transition:
     transform 0.18s cubic-bezier(0.22, 0.61, 0.36, 1),
     margin 0.18s cubic-bezier(0.22, 0.61, 0.36, 1);
@@ -13,6 +14,6 @@
 }
 
 .text-magnifier-word.magnified {
-  transform: scale(var(--magnifier-scale, 1.35)) translateY(-0.08em);
+  transform: scale(var(--magnifier-scale, 1.35));
   margin: 0 var(--magnifier-margin, 0.2em);
 }

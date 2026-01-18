@@ -119,7 +119,8 @@ test.describe('Text Magnifier', () => {
   test('拡大された単語が隣接テキストと重ならない', async ({ context }) => {
     const page = await context.newPage();
     await page.goto('http://localhost:3333/fixture.html');
-    await page.waitForTimeout(1000);
+    // 非同期初期化の完了を待つ
+    await page.waitForTimeout(2000);
 
     const paragraph = page.locator('#english-text');
     const box = await paragraph.boundingBox();
