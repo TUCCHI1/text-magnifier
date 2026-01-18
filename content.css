@@ -1,11 +1,11 @@
 .text-magnifier-word {
   display: inline-block;
-  transform: scale(1);
+  transform: scale(1) translateY(0);
   transform-origin: center bottom;
   margin: 0;
   transition:
-    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
-    margin 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform 0.18s cubic-bezier(0.22, 0.61, 0.36, 1),
+    margin 0.18s cubic-bezier(0.22, 0.61, 0.36, 1);
   position: relative;
   z-index: 10000;
   pointer-events: none;
@@ -13,6 +13,6 @@
 }
 
 .text-magnifier-word.magnified {
-  transform: scale(1.5);
-  margin: 0 var(--magnifier-margin, 0.25em);
+  transform: scale(var(--magnifier-scale, 1.35)) translateY(-0.08em);
+  margin: 0 var(--magnifier-margin, 0.2em);
 }

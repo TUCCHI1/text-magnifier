@@ -9,12 +9,20 @@
 // 型定義
 // =============================================================================
 
+type MagnificationMode = 'word' | 'character';
+
+interface MagnifierConfig {
+  mode: MagnificationMode;
+  characterCount: number;
+  scaleFactor: number;
+}
+
 interface MagnifierState {
   wrapper: HTMLSpanElement | null;
   animationFrameId: number | null;
 }
 
-interface WordRange {
+interface TextRange {
   start: number;
   end: number;
 }
@@ -23,6 +31,20 @@ interface CaretInfo {
   node: Node;
   offset: number;
 }
+
+// =============================================================================
+// 設定
+// =============================================================================
+
+/**
+ * 将来的にはストレージから読み込む想定
+ * 現在はハードコードで切り替え可能
+ */
+const CONFIG: MagnifierConfig = {
+  mode: 'character',
+  characterCount: 3,
+  scaleFactor: 1.35,
+};
 
 // =============================================================================
 // 定数
@@ -43,13 +65,6 @@ const EXCLUDED_TAGS = new Set([
 
 const MAGNIFIER_CLASS = 'text-magnifier-word';
 const MAGNIFIED_CLASS = 'magnified';
-
-/**
- * scale(1.5)で50%拡大 → 左右それぞれ25%の余白が必要
- * ただし完全に25%だとピッタリすぎるので、少し余裕を持たせる
- */
-const SCALE_FACTOR = 1.5;
-const MARGIN_RATIO = (SCALE_FACTOR - 1) / 2 + 0.05;
 
 /**
  * 日本語・韓国語・中国語を含む多言語対応のため、
@@ -122,10 +137,13 @@ const isValidTextNode = (node: Node) =>
   node.nodeType === Node.TEXT_NODE && !isExcludedElement(node.parentElement);
 
 // =============================================================================
-// 単語検出
+// 範囲検出
 // =============================================================================
 
-const findWordRange = (text: string, offset: number): WordRange | null => {
+/**
+ * 単語モード: 英語はスペース区切り、日本語は連続文字をまとめて検出
+ */
+const findWordRange = (text: string, offset: number): TextRange | null => {
   let start = offset;
   let end = offset;
 
@@ -142,7 +160,43 @@ const findWordRange = (text: string, offset: number): WordRange | null => {
   return { start, end };
 };
 
-const extractWord = (text: string, range: WordRange) =>
+/**
+ * 文字数モード: カーソル位置を中心にN文字を選択
+ * 日本語のように単語境界が曖昧な言語で有効
+ */
+const findCharacterRange = (
+  text: string,
+  offset: number,
+  count: number
+): TextRange | null => {
+  // 空白や記号の上にカーソルがある場合は無視
+  if (!isWordCharacter(text[offset]) && !isWordCharacter(text[offset - 1])) {
+    return null;
+  }
+
+  // カーソル位置を中心に前後に広げる
+  const half = Math.floor(count / 2);
+  let start = Math.max(0, offset - half);
+  let end = Math.min(text.length, start + count);
+
+  // 末尾に達した場合は開始位置を調整
+  if (end === text.length && end - start < count) {
+    start = Math.max(0, end - count);
+  }
+
+  if (start === end) return null;
+
+  return { start, end };
+};
+
+const findRange = (text: string, offset: number): TextRange | null => {
+  if (CONFIG.mode === 'character') {
+    return findCharacterRange(text, offset, CONFIG.characterCount);
+  }
+  return findWordRange(text, offset);
+};
+
+const extractText = (text: string, range: TextRange) =>
   text.substring(range.start, range.end);
 
 // =============================================================================
@@ -158,13 +212,13 @@ const removeMagnification = () => {
   state.wrapper = null;
 };
 
-const applyMagnification = (textNode: Node, range: WordRange) => {
+const applyMagnification = (textNode: Node, range: TextRange) => {
   const fullText = textNode.textContent ?? '';
-  const word = extractWord(fullText, range);
+  const targetText = extractText(fullText, range);
 
   const wrapper = document.createElement('span');
   wrapper.className = MAGNIFIER_CLASS;
-  wrapper.textContent = word;
+  wrapper.textContent = targetText;
 
   /**
    * DocumentFragmentを使用することで、DOM操作を1回にまとめ、
@@ -185,9 +239,11 @@ const applyMagnification = (textNode: Node, range: WordRange) => {
    * 単語の実際の幅に基づいてマージンを計算することで、
    * 長い単語でも短い単語でも隣接テキストと重ならない
    */
-  const wordWidth = wrapper.offsetWidth;
-  const margin = Math.ceil(wordWidth * MARGIN_RATIO);
+  const textWidth = wrapper.offsetWidth;
+  const marginRatio = (CONFIG.scaleFactor - 1) / 2 + 0.05;
+  const margin = Math.ceil(textWidth * marginRatio);
   wrapper.style.setProperty('--magnifier-margin', `${margin}px`);
+  wrapper.style.setProperty('--magnifier-scale', `${CONFIG.scaleFactor}`);
 
   wrapper.classList.add(MAGNIFIED_CLASS);
 
@@ -214,20 +270,20 @@ const processPosition = (x: number, y: number) => {
   }
 
   const text = node.textContent ?? '';
-  const wordRange = findWordRange(text, offset);
+  const range = findRange(text, offset);
 
-  if (!wordRange) {
+  if (!range) {
     removeMagnification();
     return;
   }
 
-  const word = extractWord(text, wordRange);
+  const targetText = extractText(text, range);
 
-  // 同じ単語への不要なDOM操作を避け、パフォーマンスを維持する
-  if (state.wrapper?.textContent === word) return;
+  // 同じテキストへの不要なDOM操作を避け、パフォーマンスを維持する
+  if (state.wrapper?.textContent === targetText) return;
 
   removeMagnification();
-  state.wrapper = applyMagnification(node, wordRange);
+  state.wrapper = applyMagnification(node, range);
 };
 
 // =============================================================================
