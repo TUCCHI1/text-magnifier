@@ -26,11 +26,11 @@ const test = base.extend<object, WorkerFixtures>({
 });
 
 const SPOTLIGHT_SELECTOR = '#reading-spotlight';
-const FIXTURE_URL = 'http://localhost:3333/fixtures/page.html';
+const DEMO_URL = 'http://localhost:3333/demo.html';
 
 test.describe('Reading Spotlight', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(FIXTURE_URL);
+    await page.goto(DEMO_URL);
     await page.waitForTimeout(300);
   });
 
@@ -129,5 +129,38 @@ test.describe('Reading Spotlight', () => {
     const transition = await spotlight.evaluate((el) => getComputedStyle(el).transition);
 
     expect(transition).toMatch(/top|left/);
+  });
+
+  test('無効化→有効化でスポットライトが即座に再表示される', async ({ extensionContext, page }) => {
+    const mouseX = 400;
+    const mouseY = 200;
+
+    await page.mouse.move(mouseX, mouseY);
+    await page.waitForTimeout(100);
+
+    const spotlight = page.locator(SPOTLIGHT_SELECTOR);
+    await expect(spotlight).toBeVisible({ timeout: 2000 });
+
+    let [worker] = extensionContext.serviceWorkers();
+    if (!worker) {
+      worker = await extensionContext.waitForEvent('serviceworker');
+    }
+
+    await worker.evaluate(() => chrome.storage.sync.set({ enabled: false }));
+    await page.waitForTimeout(200);
+    await expect(spotlight).not.toBeVisible();
+
+    await worker.evaluate(() => chrome.storage.sync.set({ enabled: true }));
+    await page.waitForTimeout(200);
+    await expect(spotlight).toBeVisible({ timeout: 2000 });
+
+    const box = await spotlight.boundingBox();
+    expect(box).not.toBeNull();
+    if (box) {
+      const centerX = box.x + box.width / 2;
+      const centerY = box.y + box.height / 2;
+      expect(Math.abs(centerX - mouseX)).toBeLessThanOrEqual(5);
+      expect(Math.abs(centerY - mouseY)).toBeLessThanOrEqual(5);
+    }
   });
 });
