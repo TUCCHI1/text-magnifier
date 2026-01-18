@@ -14,6 +14,7 @@ Based on research from CHI 2023 on reading aids and focus enhancement.
 - Adjustable dim opacity for surrounding areas
 - Smooth cursor tracking with optimized performance
 - Enable/disable toggle
+- Keyboard shortcut for quick toggle (customizable)
 
 ## Installation
 
@@ -58,6 +59,13 @@ Coming soon.
 
 The spotlight will automatically follow your mouse cursor on any webpage.
 
+### Keyboard Shortcut
+
+- **Windows/Linux**: `Ctrl+Shift+S`
+- **Mac**: `Cmd+Shift+S`
+
+To customize the shortcut, go to `chrome://extensions/shortcuts`.
+
 ## Development
 
 ### Prerequisites
@@ -80,6 +88,7 @@ The spotlight will automatically follow your mouse cursor on any webpage.
 ```
 ├── src/
 │   ├── entrypoints/
+│   │   ├── background.ts
 │   │   ├── content.ts
 │   │   └── popup/
 │   │       ├── main.ts
