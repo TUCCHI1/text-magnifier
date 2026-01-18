@@ -23,6 +23,15 @@ const test = base.extend<{ context: BrowserContext }>({
 });
 
 test.describe('Text Magnifier', () => {
+  test('手動操作モード', async ({ context }) => {
+    const page = await context.newPage();
+    await page.goto('http://localhost:3333/fixture.html');
+
+    // ここで一時停止 - ブラウザを自由に操作できる
+    // Playwright Inspectorの「Resume」ボタンで再開
+    await page.pause();
+  });
+
   test('英語テキストをホバーすると単語が拡大される', async ({ context }) => {
     const page = await context.newPage();
     await page.goto('http://localhost:3333/fixture.html');

@@ -15,8 +15,9 @@
     "postbuild": "cd dist && zip -r text-magnifier.zip manifest.json content.js content.css popup.html popup.js icons/",
     "clean": "rm -rf dist",
     "dev": "tsc --watch",
-    "test": "npm run build && playwright test",
-    "test:headed": "npm run build && playwright test --headed"
+    "test": "npm run build && playwright test --grep-invert '手動操作'",
+    "test:headed": "npm run build && playwright test --headed --grep-invert '手動操作'",
+    "test:manual": "npm run build && playwright test --headed --grep '手動操作'"
   },
   "keywords": [
     "chrome-extension",
