@@ -15,6 +15,8 @@ const state = {
   config: { ...DEFAULT_CONFIG } as SpotlightConfig,
   element: null as HTMLDivElement | null,
   animationFrameId: null as number | null,
+  lastMouseX: 0,
+  lastMouseY: 0,
 };
 
 const buildCSS = () => {
@@ -107,6 +109,8 @@ const subscribeToStorageChanges = () => {
 
     if (wasEnabled && !state.config.enabled) {
       removeSpotlight();
+    } else if (!wasEnabled && state.config.enabled) {
+      updateSpotlightPosition(state.lastMouseX, state.lastMouseY);
     } else if (state.element) {
       applyStyle(state.element);
     }
@@ -172,13 +176,16 @@ const updateSpotlightPosition = (mouseX: number, mouseY: number) => {
 };
 
 const onMouseMove = (event: MouseEvent) => {
+  state.lastMouseX = event.clientX;
+  state.lastMouseY = event.clientY;
+
   if (state.animationFrameId !== null) {
     return;
   }
 
   state.animationFrameId = requestAnimationFrame(() => {
     state.animationFrameId = null;
-    updateSpotlightPosition(event.clientX, event.clientY);
+    updateSpotlightPosition(state.lastMouseX, state.lastMouseY);
   });
 };
 
