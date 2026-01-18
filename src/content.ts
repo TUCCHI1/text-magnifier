@@ -20,7 +20,14 @@ interface MagnifierConfig {
 interface MagnifierState {
   wrapper: HTMLSpanElement | null;
   animationFrameId: number | null;
+  lastChangeTime: number;
 }
+
+/**
+ * 拡大対象の切替後、次の切替まで待機する時間（ミリ秒）
+ * これにより、マウスを横に動かしたときのブルブルを防ぐ
+ */
+const CHANGE_COOLDOWN_MS = 150;
 
 interface TextRange {
   start: number;
@@ -103,6 +110,7 @@ const WORD_CHARACTER_PATTERN = /[\w\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\uAC00
 const state: MagnifierState = {
   wrapper: null,
   animationFrameId: null,
+  lastChangeTime: 0,
 };
 
 // =============================================================================
@@ -310,6 +318,10 @@ const processPosition = (x: number, y: number) => {
   // 現在拡大中の要素の上にいる場合は何もしない
   if (isMouseOverMagnified(x, y)) return;
 
+  // クールダウン中は新しい拡大処理をスキップ
+  const now = Date.now();
+  if (state.wrapper && now - state.lastChangeTime < CHANGE_COOLDOWN_MS) return;
+
   const caretInfo = getCaretInfoAtPoint(x, y);
 
   if (!caretInfo) {
@@ -339,6 +351,7 @@ const processPosition = (x: number, y: number) => {
 
   removeMagnification();
   state.wrapper = applyMagnification(node, range);
+  state.lastChangeTime = now;
 };
 
 // =============================================================================
