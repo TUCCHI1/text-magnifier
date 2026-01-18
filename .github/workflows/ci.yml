@@ -60,4 +60,4 @@ jobs:
 
       - run: npm run build
 
-      - run: npx playwright test --grep-invert '手動操作'
+      - run: xvfb-run npx playwright test --grep-invert '手動操作'
