@@ -1,7 +1,7 @@
 {
-  "name": "text-magnifier",
-  "version": "1.0.0",
-  "description": "Chrome extension that magnifies text on hover with smooth animation",
+  "name": "reading-spotlight",
+  "version": "2.0.0",
+  "description": "Chrome extension that helps focus on text with a customizable spotlight overlay",
   "type": "module",
   "private": true,
   "engines": {
@@ -11,12 +11,12 @@
     "typecheck": "tsc --noEmit",
     "compile": "tsc",
     "prebuild": "npm run clean && npm run compile",
-    "build": "cp manifest.json content.css src/popup.html dist/ && cp -r icons dist/",
-    "postbuild": "cd dist && zip -r text-magnifier.zip manifest.json content.js content.css popup.html popup.js icons/",
+    "build": "cp manifest.json src/popup.html dist/ && cp -r icons dist/",
+    "postbuild": "cd dist && zip -r reading-spotlight.zip manifest.json content.js popup.html popup.js icons/",
     "clean": "rm -rf dist",
-    "copy": "cp manifest.json content.css src/popup.html dist/ && cp -r icons dist/",
+    "copy": "cp manifest.json src/popup.html dist/ && cp -r icons dist/",
     "watch:ts": "tsc --watch --preserveWatchOutput",
-    "watch:static": "chokidar 'manifest.json' 'content.css' 'src/popup.html' 'icons/**/*' -c 'npm run copy'",
+    "watch:static": "chokidar 'manifest.json' 'src/popup.html' 'icons/**/*' -c 'npm run copy'",
     "dev": "npm run compile && npm run copy && concurrently -n ts,static -c blue,green 'npm:watch:ts' 'npm:watch:static'",
     "test": "npm run build && playwright test --grep-invert '手動操作'",
     "test:headed": "npm run build && playwright test --headed --grep-invert '手動操作'",
@@ -25,7 +25,8 @@
   "keywords": [
     "chrome-extension",
     "accessibility",
-    "text-magnifier"
+    "reading-aid",
+    "focus"
   ],
   "author": "",
   "license": "MIT",

@@ -41,7 +41,6 @@ const elements = {
   heightValue: $<HTMLSpanElement>('height-value'),
   dimOpacity: $<HTMLInputElement>('dimOpacity'),
   dimValue: $<HTMLSpanElement>('dim-value'),
-  colorPicker: $<HTMLDivElement>('color-picker'),
 };
 
 const colorButtons = document.querySelectorAll<HTMLButtonElement>('.color-option');

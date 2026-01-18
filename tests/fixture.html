@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>Text Magnifier Test Page</title>
+  <title>Reading Spotlight Test Page</title>
   <style>
     body {
       font-family: sans-serif;
@@ -20,32 +20,21 @@
   </style>
 </head>
 <body>
-  <h1>Text Magnifier テストページ</h1>
+  <h1>Reading Spotlight テストページ</h1>
 
   <div class="section" id="english">
     <h2>English Text</h2>
-    <p id="english-text">Hello world this is a test paragraph for text magnifier extension.</p>
+    <p id="english-text">Hello world this is a test paragraph for reading spotlight extension.</p>
   </div>
 
   <div class="section" id="japanese">
     <h2>日本語テキスト</h2>
-    <p id="japanese-text">これはテスト用の日本語テキストです。拡大機能が正しく動作するか確認します。</p>
+    <p id="japanese-text">これはテスト用の日本語テキストです。スポットライト機能が正しく動作するか確認します。</p>
   </div>
 
   <div class="section" id="mixed">
     <h2>Mixed Content</h2>
     <p id="mixed-text">This is mixed 日本語 and English テキスト for testing.</p>
-  </div>
-
-  <div class="section" id="form">
-    <h2>Form Elements (should be excluded)</h2>
-    <input type="text" id="test-input" value="Input text should not magnify">
-    <textarea id="test-textarea">Textarea text should not magnify</textarea>
-  </div>
-
-  <div class="section" id="editable">
-    <h2>Contenteditable (should be excluded)</h2>
-    <div id="test-editable" contenteditable="true">Editable text should not magnify</div>
   </div>
 </body>
 </html>
