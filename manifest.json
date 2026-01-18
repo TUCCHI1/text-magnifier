@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Text Magnifier",
+  "version": "1.0.0",
+  "description": "Hover over text to magnify words with smooth animation",
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

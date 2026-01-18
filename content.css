@@ -1,0 +1,9 @@
+.text-magnifier-word {
+  display: inline-block;
+  transform: scale(1.5);
+  transform-origin: center bottom;
+  transition: transform 0.15s ease-out;
+  position: relative;
+  z-index: 10000;
+  pointer-events: none;
+}
