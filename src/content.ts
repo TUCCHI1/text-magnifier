@@ -86,12 +86,26 @@ const generateCSS = (): string => `
 // Storage
 // =============================================================================
 
+const isValidConfig = (data: unknown): data is Partial<SpotlightConfig> => {
+  if (typeof data !== 'object' || data === null) return false;
+  const d = data as Record<string, unknown>;
+  return (
+    (d.width === undefined || typeof d.width === 'number') &&
+    (d.height === undefined || typeof d.height === 'number') &&
+    (d.dimOpacity === undefined || typeof d.dimOpacity === 'number') &&
+    (d.color === undefined || typeof d.color === 'string') &&
+    (d.enabled === undefined || typeof d.enabled === 'boolean')
+  );
+};
+
 const loadConfig = async (): Promise<void> => {
   if (typeof chrome === 'undefined' || !chrome.storage?.sync) return;
 
   try {
     const stored = await chrome.storage.sync.get(Object.keys(DEFAULT_CONFIG));
-    config = { ...DEFAULT_CONFIG, ...stored };
+    if (isValidConfig(stored)) {
+      config = { ...DEFAULT_CONFIG, ...stored };
+    }
   } catch {
     // Fallback to defaults
   }
@@ -105,7 +119,7 @@ const subscribeToConfigChanges = (): void => {
     const newConfig = { ...config };
 
     for (const [key, change] of Object.entries(changes)) {
-      if (key in DEFAULT_CONFIG && change.newValue !== undefined) {
+      if (Object.hasOwn(DEFAULT_CONFIG, key) && change.newValue !== undefined) {
         (newConfig as Record<string, unknown>)[key] = change.newValue;
         hasUpdates = true;
       }

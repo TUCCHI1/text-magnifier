@@ -26,6 +26,11 @@ const DEFAULTS: Config = {
   enabled: true,
 };
 
+const VALID_COLORS = ['yellow', 'blue', 'green', 'peach', 'gray', 'aqua'] as const;
+
+const clamp = (value: number, min: number, max: number): number =>
+  Math.max(min, Math.min(max, value));
+
 // =============================================================================
 // Elements
 // =============================================================================
@@ -88,19 +93,19 @@ const handleEnabledChange = (): void => {
 };
 
 const handleWidthChange = (): void => {
-  const width = Number(elements.width.value);
+  const width = clamp(Number(elements.width.value) || DEFAULTS.width, 200, 1200);
   elements.widthValue.textContent = `${width}px`;
   save({ width });
 };
 
 const handleHeightChange = (): void => {
-  const height = Number(elements.height.value);
+  const height = clamp(Number(elements.height.value) || DEFAULTS.height, 20, 80);
   elements.heightValue.textContent = `${height}px`;
   save({ height });
 };
 
 const handleDimChange = (): void => {
-  const dimOpacity = Number(elements.dimOpacity.value);
+  const dimOpacity = clamp(Number(elements.dimOpacity.value) || DEFAULTS.dimOpacity, 0.1, 0.5);
   elements.dimValue.textContent = `${Math.round(dimOpacity * 100)}%`;
   save({ dimOpacity });
 };
@@ -109,7 +114,7 @@ const handleColorChange = (event: Event): void => {
   const target = event.target as HTMLButtonElement;
   const color = target.dataset['color'];
 
-  if (!color) return;
+  if (!color || !VALID_COLORS.includes(color as typeof VALID_COLORS[number])) return;
 
   colorButtons.forEach((btn) => {
     btn.classList.toggle('active', btn === target);
