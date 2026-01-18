@@ -193,6 +193,201 @@
         background: rgba(127, 255, 212, 0.6);
       }
 
+      /* Custom color (Pro) */
+      .custom-color-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed var(--border);
+      }
+
+      .custom-color-input {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+        background: transparent;
+      }
+
+      .custom-color-input::-webkit-color-swatch-wrapper {
+        padding: 2px;
+      }
+
+      .custom-color-input::-webkit-color-swatch {
+        border: none;
+        border-radius: 4px;
+      }
+
+      .custom-color-input.active {
+        border-color: var(--primary);
+      }
+
+      .custom-color-input:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      .custom-color-label {
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      .pro-badge {
+        display: inline-block;
+        padding: 2px 6px;
+        font-size: 9px;
+        font-weight: 600;
+        color: #fff;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      /* Pro section */
+      .pro-section {
+        margin-top: 14px;
+        padding: 12px;
+        background: #f8f9fa;
+        border-radius: 8px;
+      }
+
+      .pro-section.unlocked {
+        background: linear-gradient(
+          135deg,
+          rgba(102, 126, 234, 0.1) 0%,
+          rgba(118, 75, 162, 0.1) 100%
+        );
+      }
+
+      .pro-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .pro-title {
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .pro-status {
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+
+      .license-input-wrapper {
+        display: flex;
+        gap: 6px;
+      }
+
+      .license-input {
+        flex: 1;
+        padding: 6px 8px;
+        font-size: 11px;
+        font-family: monospace;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        outline: none;
+      }
+
+      .license-input:focus {
+        border-color: var(--primary);
+      }
+
+      .license-btn {
+        padding: 6px 10px;
+        font-size: 11px;
+        font-weight: 500;
+        color: #fff;
+        background: var(--primary);
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: opacity 0.15s;
+      }
+
+      .license-btn:hover {
+        opacity: 0.9;
+      }
+
+      .license-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .license-error {
+        margin-top: 6px;
+        font-size: 10px;
+        color: #dc3545;
+      }
+
+      .license-success {
+        margin-top: 6px;
+        font-size: 10px;
+        color: #28a745;
+      }
+
+      .buy-link {
+        display: block;
+        margin-top: 8px;
+        font-size: 10px;
+        color: var(--primary);
+        text-decoration: none;
+        text-align: center;
+      }
+
+      .buy-link:hover {
+        text-decoration: underline;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      /* Mode selector */
+      .mode-selector {
+        display: flex;
+        gap: 8px;
+      }
+
+      .mode-btn {
+        flex: 1;
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-muted);
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          border-color 0.15s,
+          color 0.15s;
+      }
+
+      .mode-btn:hover {
+        border-color: var(--primary);
+      }
+
+      .mode-btn.active {
+        color: var(--primary);
+        background: rgba(74, 144, 217, 0.1);
+        border-color: var(--primary);
+      }
+
+      .reading-mode-settings {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px dashed var(--border);
+      }
+
       .footer {
         margin-top: 16px;
         padding-top: 12px;
@@ -228,6 +423,24 @@
 
     <div class="setting">
       <div class="setting-header">
+        <span class="setting-label">モード</span>
+      </div>
+      <div class="mode-selector">
+        <button class="mode-btn active" data-mode="follow">追従</button>
+        <button class="mode-btn" data-mode="reading">リーディング</button>
+      </div>
+      <div class="reading-mode-settings hidden" id="readingModeSettings">
+        <div class="setting-header">
+          <span class="setting-label">Y位置</span>
+          <span class="setting-value" id="fixedY-value">40%</span>
+        </div>
+        <input type="range" id="fixedYPercent" min="10" max="90" step="5" value="40" />
+        <div class="hint">スポットライトの画面内での縦位置</div>
+      </div>
+    </div>
+
+    <div class="setting">
+      <div class="setting-header">
         <span class="setting-label">色</span>
       </div>
       <div class="color-grid">
@@ -243,6 +456,11 @@
         <button class="color-option color-aqua" data-color="aqua" title="アクア"></button>
       </div>
       <div class="hint">視覚ストレス研究に基づく色</div>
+      <div class="custom-color-wrapper">
+        <input type="color" id="customColor" class="custom-color-input" value="#ffff00" disabled />
+        <span class="custom-color-label">カスタム色</span>
+        <span class="pro-badge">Pro</span>
+      </div>
     </div>
 
     <div class="setting">
@@ -267,6 +485,26 @@
         <span class="setting-value" id="dim-value">25%</span>
       </div>
       <input type="range" id="dimOpacity" min="0.1" max="0.5" step="0.05" value="0.25" />
+    </div>
+
+    <div class="pro-section" id="proSection">
+      <div class="pro-header">
+        <span class="pro-title">Pro</span>
+        <span class="pro-status" id="proStatus">未登録</span>
+      </div>
+      <div id="licenseForm">
+        <div class="license-input-wrapper">
+          <input
+            type="text"
+            id="licenseKey"
+            class="license-input"
+            placeholder="RS-PRO-XXXXXXXXXXXX"
+            autocomplete="off"
+          />
+          <button type="button" id="activateBtn" class="license-btn">登録</button>
+        </div>
+        <div id="licenseMessage"></div>
+      </div>
     </div>
 
     <div class="footer">
