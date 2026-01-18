@@ -1,38 +1,44 @@
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import { type BrowserContext, test as base, chromium, expect } from '@playwright/test';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const extensionPath = join(import.meta.dirname, '..', 'dist');
 
-const extensionPath = join(__dirname, '..', 'dist');
+type WorkerFixtures = {
+  extensionContext: BrowserContext;
+};
 
-const test = base.extend<{ context: BrowserContext }>({
-  // biome-ignore lint/correctness/noEmptyPattern: Playwright fixture pattern
-  context: async ({}, use) => {
-    const context = await chromium.launchPersistentContext('', {
-      headless: false,
-      args: [`--disable-extensions-except=${extensionPath}`, `--load-extension=${extensionPath}`],
-    });
-    await use(context);
-    await context.close();
+const test = base.extend<object, WorkerFixtures>({
+  extensionContext: [
+    async ({}, use) => {
+      const context = await chromium.launchPersistentContext('', {
+        headless: false,
+        args: [`--disable-extensions-except=${extensionPath}`, `--load-extension=${extensionPath}`],
+      });
+      await use(context);
+      await context.close();
+    },
+    { scope: 'worker' },
+  ],
+  page: async ({ extensionContext }, use) => {
+    const page = await extensionContext.newPage();
+    await use(page);
   },
 });
 
 const SPOTLIGHT_SELECTOR = '#reading-spotlight';
+const FIXTURE_URL = 'http://localhost:3333/fixtures/page.html';
 
 test.describe('Reading Spotlight', () => {
-  test('手動操作モード', async ({ context }) => {
-    const page = await context.newPage();
-    await page.goto('http://localhost:3333/fixture.html');
+  test.beforeEach(async ({ page }) => {
+    await page.goto(FIXTURE_URL);
+    await page.waitForTimeout(300);
+  });
+
+  test('手動操作モード', async ({ page }) => {
     await page.pause();
   });
 
-  test('マウス移動でスポットライトが表示される', async ({ context }) => {
-    const page = await context.newPage();
-    await page.goto('http://localhost:3333/fixture.html');
-    await page.waitForTimeout(300);
-
+  test('マウス移動でスポットライトが表示される', async ({ page }) => {
     await page.mouse.move(400, 200);
     await page.waitForTimeout(100);
 
@@ -40,11 +46,7 @@ test.describe('Reading Spotlight', () => {
     await expect(spotlight).toBeVisible({ timeout: 2000 });
   });
 
-  test('スポットライトがマウス位置を中心に配置される', async ({ context }) => {
-    const page = await context.newPage();
-    await page.goto('http://localhost:3333/fixture.html');
-    await page.waitForTimeout(300);
-
+  test('スポットライトがマウス位置を中心に配置される', async ({ page }) => {
     const mouseX = 400;
     const mouseY = 250;
     await page.mouse.move(mouseX, mouseY);
@@ -60,17 +62,12 @@ test.describe('Reading Spotlight', () => {
       const centerX = box.x + box.width / 2;
       const centerY = box.y + box.height / 2;
 
-      // 中心位置がマウス位置と一致（2px以内）
       expect(Math.abs(centerX - mouseX)).toBeLessThanOrEqual(2);
       expect(Math.abs(centerY - mouseY)).toBeLessThanOrEqual(2);
     }
   });
 
-  test('マウスがドキュメントから離れるとスポットライトが消える', async ({ context }) => {
-    const page = await context.newPage();
-    await page.goto('http://localhost:3333/fixture.html');
-    await page.waitForTimeout(300);
-
+  test('マウスがドキュメントから離れるとスポットライトが消える', async ({ page }) => {
     await page.mouse.move(400, 200);
     await page.waitForTimeout(100);
 
@@ -85,11 +82,7 @@ test.describe('Reading Spotlight', () => {
     await expect(spotlight).not.toBeVisible();
   });
 
-  test('スポットライトがクリックを妨げない（pointer-events: none）', async ({ context }) => {
-    const page = await context.newPage();
-    await page.goto('http://localhost:3333/fixture.html');
-    await page.waitForTimeout(300);
-
+  test('スポットライトがクリックを妨げない（pointer-events: none）', async ({ page }) => {
     await page.mouse.move(400, 200);
     await page.waitForTimeout(100);
 
@@ -101,11 +94,7 @@ test.describe('Reading Spotlight', () => {
     expect(pointerEvents).toBe('none');
   });
 
-  test('スポットライトが最前面に表示される（z-index）', async ({ context }) => {
-    const page = await context.newPage();
-    await page.goto('http://localhost:3333/fixture.html');
-    await page.waitForTimeout(300);
-
+  test('スポットライトが最前面に表示される（z-index）', async ({ page }) => {
     await page.mouse.move(400, 200);
     await page.waitForTimeout(100);
 
@@ -117,30 +106,20 @@ test.describe('Reading Spotlight', () => {
     expect(zIndex).toBe(2147483647);
   });
 
-  test('周囲がディム（暗く）される', async ({ context }) => {
-    const page = await context.newPage();
-    await page.goto('http://localhost:3333/fixture.html');
-    await page.waitForTimeout(300);
-
+  test('周囲がディム（暗く）される', async ({ page }) => {
     await page.mouse.move(400, 200);
     await page.waitForTimeout(100);
 
     const spotlight = page.locator(SPOTLIGHT_SELECTOR);
     await expect(spotlight).toBeVisible({ timeout: 2000 });
 
-    // box-shadowが設定されていることを確認
     const boxShadow = await spotlight.evaluate((el) => getComputedStyle(el).boxShadow);
 
-    // box-shadow should contain rgba with some opacity
     expect(boxShadow).toMatch(/rgba?\([^)]+\)/);
     expect(boxShadow).not.toBe('none');
   });
 
-  test('スムーズに追従する（transitionが設定されている）', async ({ context }) => {
-    const page = await context.newPage();
-    await page.goto('http://localhost:3333/fixture.html');
-    await page.waitForTimeout(300);
-
+  test('スムーズに追従する（transitionが設定されている）', async ({ page }) => {
     await page.mouse.move(400, 200);
     await page.waitForTimeout(100);
 
@@ -149,7 +128,6 @@ test.describe('Reading Spotlight', () => {
 
     const transition = await spotlight.evaluate((el) => getComputedStyle(el).transition);
 
-    // transition should include top and left
     expect(transition).toMatch(/top|left/);
   });
 });
