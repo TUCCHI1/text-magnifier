@@ -1,11 +1,11 @@
 import { defineConfig } from '@playwright/test';
 
-function getReporter() {
+const getReporter = () => {
   if (process.env.CI) {
     return 'html';
   }
   return 'list';
-}
+};
 
 export default defineConfig({
   testDir: './tests',

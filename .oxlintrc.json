@@ -15,7 +15,8 @@
   "rules": {
     "prefer-const": "error",
     "no-var": "error",
-    "no-ternary": "error"
+    "no-ternary": "error",
+    "func-style": ["error", "expression"]
   },
   "overrides": [
     {
