@@ -1,0 +1,9 @@
+Reading Spotlight creates a colored overlay that follows your cursor, helping you focus on text while reading.
+
+The spotlight dims everything outside the focus area, reducing visual noise and making it easier to track lines of text. You can adjust the size, color, and opacity to match your preferences.
+
+Includes a keyboard shortcut (Ctrl+Shift+S on Windows/Linux, Cmd+Shift+S on Mac) for quick on/off toggle. You can customize this shortcut at chrome://extensions/shortcuts.
+
+Based on reading aid research from CHI 2023 and the Irlen Method for visual stress reduction.
+
+No data collection, no tracking, no ads. Your settings stay in your browser. The source code is available at https://github.com/TUCCHI1/text-magnifier
