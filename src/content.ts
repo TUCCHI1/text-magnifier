@@ -260,14 +260,11 @@ const applyMagnification = (textNode: Node, range: TextRange) => {
   (textNode as ChildNode).replaceWith(fragment);
 
   /**
-   * 単語の実際の幅に基づいてマージンを計算することで、
-   * 長い単語でも短い単語でも隣接テキストと重ならない
+   * font-sizeでスケールするため、要素は自然に広がる
+   * 追加マージンは視覚的な余白として少量のみ設定
    */
-  const textWidth = wrapper.offsetWidth;
-  const marginRatio = (config.scaleFactor - 1) / 2 + 0.05;
-  const margin = Math.ceil(textWidth * marginRatio);
-  wrapper.style.setProperty('--magnifier-margin', `${margin}px`);
-  wrapper.style.setProperty('--magnifier-scale', `${config.scaleFactor}`);
+  wrapper.style.setProperty('--magnifier-margin', '0.08em');
+  wrapper.style.setProperty('--magnifier-scale', `${config.scaleFactor}em`);
 
   wrapper.classList.add(MAGNIFIED_CLASS);
 
