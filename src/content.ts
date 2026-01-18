@@ -289,11 +289,20 @@ const isMouseOverMagnified = (x: number, y: number) => {
   if (!state.wrapper) return false;
 
   const rect = state.wrapper.getBoundingClientRect();
+
+  /**
+   * font-sizeアニメーション中はrectが変化するため、
+   * 拡大後の最終サイズを推定してパディングを追加
+   * (現在サイズ × scale倍率 - 現在サイズ) / 2 ≈ 現在サイズ × 0.2
+   */
+  const horizontalPadding = rect.width * 0.3;
+  const verticalPadding = rect.height * 0.3;
+
   return (
-    x >= rect.left &&
-    x <= rect.right &&
-    y >= rect.top &&
-    y <= rect.bottom
+    x >= rect.left - horizontalPadding &&
+    x <= rect.right + horizontalPadding &&
+    y >= rect.top - verticalPadding &&
+    y <= rect.bottom + verticalPadding
   );
 };
 

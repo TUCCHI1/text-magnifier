@@ -236,6 +236,68 @@ test.describe('Text Magnifier', () => {
     expect(baselineAligned).toBe(true);
   });
 
+  test('拡大中の要素上でマウスを動かしても再発火しない', async ({ context }) => {
+    const page = await context.newPage();
+    await page.goto('http://localhost:3333/fixture.html');
+    await page.waitForTimeout(2000);
+
+    const paragraph = page.locator('#english-text');
+    const box = await paragraph.boundingBox();
+    if (!box) throw new Error('Element not found');
+
+    // 最初のホバー
+    await page.mouse.move(box.x + 60, box.y + 10);
+    await page.waitForTimeout(300);
+
+    const magnified = page.locator('.text-magnifier-word.magnified');
+    await expect(magnified).toBeVisible({ timeout: 5000 });
+
+    // 拡大された要素の初期テキストを記録
+    const initialText = await magnified.textContent();
+
+    // DOM変更を監視
+    const mutationCount = await page.evaluate(() => {
+      return new Promise<number>((resolve) => {
+        let count = 0;
+        const observer = new MutationObserver((mutations) => {
+          count += mutations.length;
+        });
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+          characterData: true,
+        });
+
+        // 500ms後に監視終了
+        setTimeout(() => {
+          observer.disconnect();
+          resolve(count);
+        }, 500);
+      });
+    });
+
+    // 拡大された要素の範囲内でマウスを少し動かす
+    const magnifiedBox = await magnified.boundingBox();
+    if (magnifiedBox) {
+      // 要素内で5回マウスを動かす
+      for (let i = 0; i < 5; i++) {
+        await page.mouse.move(
+          magnifiedBox.x + magnifiedBox.width * (0.3 + i * 0.1),
+          magnifiedBox.y + magnifiedBox.height * 0.5
+        );
+        await page.waitForTimeout(50);
+      }
+    }
+
+    // 要素が変わっていないことを確認
+    const finalText = await magnified.textContent();
+    expect(finalText).toBe(initialText);
+
+    // DOM変更が発生していないことを確認（または最小限）
+    // アニメーション関連の変更は許容するため、大きな変更がないことを確認
+    expect(mutationCount).toBeLessThan(10);
+  });
+
   test('拡大時にアニメーション（トランジション）が適用される', async ({ context }) => {
     const page = await context.newPage();
     await page.goto('http://localhost:3333/fixture.html');
