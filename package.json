@@ -26,7 +26,8 @@
     "dev": "npm run compile && npm run copy && concurrently -n ts,static -c blue,green 'npm:watch:ts' 'npm:watch:static'",
     "test": "npm run build && playwright test --grep-invert '手動操作'",
     "test:headed": "npm run build && playwright test --headed --grep-invert '手動操作'",
-    "test:manual": "npm run build && playwright test --headed --grep '手動操作'"
+    "test:manual": "npm run build && playwright test --headed --grep '手動操作'",
+    "screenshots": "npx tsx scripts/screenshots.ts"
   },
   "keywords": [
     "chrome-extension",
