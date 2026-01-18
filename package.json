@@ -14,7 +14,10 @@
     "build": "cp manifest.json content.css src/popup.html dist/ && cp -r icons dist/",
     "postbuild": "cd dist && zip -r text-magnifier.zip manifest.json content.js content.css popup.html popup.js icons/",
     "clean": "rm -rf dist",
-    "dev": "tsc --watch",
+    "copy": "cp manifest.json content.css src/popup.html dist/ && cp -r icons dist/",
+    "watch:ts": "tsc --watch --preserveWatchOutput",
+    "watch:static": "chokidar 'manifest.json' 'content.css' 'src/popup.html' 'icons/**/*' -c 'npm run copy'",
+    "dev": "npm run compile && npm run copy && concurrently -n ts,static -c blue,green 'npm:watch:ts' 'npm:watch:static'",
     "test": "npm run build && playwright test --grep-invert '手動操作'",
     "test:headed": "npm run build && playwright test --headed --grep-invert '手動操作'",
     "test:manual": "npm run build && playwright test --headed --grep '手動操作'"
@@ -29,6 +32,8 @@
   "devDependencies": {
     "@playwright/test": "^1.57.0",
     "@types/chrome": "^0.1.33",
+    "chokidar-cli": "^3.0.0",
+    "concurrently": "^9.2.1",
     "serve": "^14.2.5",
     "typescript": "^5.9.3"
   }
