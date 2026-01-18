@@ -1,27 +1,24 @@
 /**
  * Text Magnifier - Chrome拡張機能
- * ホバーした単語をアニメーションで拡大表示する
+ *
+ * 長文を読む際にカーソル位置を見失いやすい問題を解決するため、
+ * ホバー中の単語を視覚的に強調表示する
  */
 
 // =============================================================================
 // 型定義
 // =============================================================================
 
-/** 拡大状態を管理するアプリケーション状態 */
 interface MagnifierState {
-  /** 現在ラップ中の単語要素（なければnull） */
   wrapper: HTMLSpanElement | null;
-  /** 保留中のアニメーションフレームID（なければnull） */
   animationFrameId: number | null;
 }
 
-/** テキスト内の単語の開始・終了位置 */
 interface WordRange {
   start: number;
   end: number;
 }
 
-/** キャレット位置の情報 */
 interface CaretInfo {
   node: Node;
   offset: number;
@@ -31,7 +28,10 @@ interface CaretInfo {
 // 定数
 // =============================================================================
 
-/** 処理対象外のHTMLタグ */
+/**
+ * フォーム要素やスクリプトなど、テキスト拡大が不適切または
+ * 予期しない動作を引き起こす要素を除外するため
+ */
 const EXCLUDED_TAGS = new Set([
   'input',
   'textarea',
@@ -41,15 +41,12 @@ const EXCLUDED_TAGS = new Set([
   'svg',
 ]);
 
-/** 拡大対象の単語に適用するCSSクラス */
 const MAGNIFIER_CLASS = 'text-magnifier-word';
-
-/** 拡大アニメーション開始時に追加するCSSクラス */
 const MAGNIFIED_CLASS = 'magnified';
 
 /**
- * 単語を構成する文字のパターン
- * 対象: ASCII英数字、ひらがな、カタカナ、漢字、ハングル
+ * 日本語・韓国語・中国語を含む多言語対応のため、
+ * ASCII以外のUnicode範囲も単語文字として認識する
  */
 const WORD_CHARACTER_PATTERN = /[\w\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\uAC00-\uD7AF]/;
 
@@ -66,23 +63,16 @@ const state: MagnifierState = {
 // DOMユーティリティ
 // =============================================================================
 
-/**
- * テキストノードを作成する
- */
 const createTextNode = (text: string) => document.createTextNode(text);
 
-/**
- * 文字が単語を構成する文字かどうかを判定する
- */
 const isWordCharacter = (char: string | undefined) =>
   char !== undefined && WORD_CHARACTER_PATTERN.test(char);
 
 /**
- * 指定座標のキャレット位置を取得する
- * W3C標準APIを優先し、Chrome/Safari用にフォールバック
+ * ブラウザ間の互換性を確保するため、W3C標準APIを優先し、
+ * 未対応ブラウザ（Chrome/Safari）では独自APIにフォールバック
  */
 const getCaretInfoAtPoint = (x: number, y: number): CaretInfo | null => {
-  // W3C標準API（Firefox、将来のブラウザ）
   if (document.caretPositionFromPoint) {
     const position = document.caretPositionFromPoint(x, y);
     if (!position) return null;
@@ -93,7 +83,6 @@ const getCaretInfoAtPoint = (x: number, y: number): CaretInfo | null => {
     };
   }
 
-  // Chrome/Safari独自API（types.d.tsで型定義済み）
   const range = document.caretRangeFromPoint(x, y);
   if (!range) return null;
 
@@ -107,25 +96,21 @@ const getCaretInfoAtPoint = (x: number, y: number): CaretInfo | null => {
 // 要素の検証
 // =============================================================================
 
-/**
- * 要素が拡大対象外かどうかを判定する
- */
 const isExcludedElement = (element: Element | null) => {
   if (!element) return true;
 
   const tagName = element.tagName.toLowerCase();
   if (EXCLUDED_TAGS.has(tagName)) return true;
 
+  // 編集可能要素では入力の邪魔になるため除外
   if (element instanceof HTMLElement && element.isContentEditable) return true;
 
+  // 既にラップ済みの要素を再処理すると無限ループになるため除外
   if (element.closest(`.${MAGNIFIER_CLASS}`)) return true;
 
   return false;
 };
 
-/**
- * ノードが処理可能なテキストノードかどうかを検証する
- */
 const isValidTextNode = (node: Node) =>
   node.nodeType === Node.TEXT_NODE && !isExcludedElement(node.parentElement);
 
@@ -133,33 +118,23 @@ const isValidTextNode = (node: Node) =>
 // 単語検出
 // =============================================================================
 
-/**
- * 指定オフセット位置の単語の範囲を検出する
- * 単語が見つからない場合はnullを返す
- */
 const findWordRange = (text: string, offset: number): WordRange | null => {
   let start = offset;
   let end = offset;
 
-  // 前方に拡張して単語の開始位置を探す
   while (start > 0 && isWordCharacter(text[start - 1])) {
     start--;
   }
 
-  // 後方に拡張して単語の終了位置を探す
   while (end < text.length && isWordCharacter(text[end])) {
     end++;
   }
 
-  // 範囲が拡張されなければ単語なし
   if (start === end) return null;
 
   return { start, end };
 };
 
-/**
- * テキストから指定範囲の単語を抽出する
- */
 const extractWord = (text: string, range: WordRange) =>
   text.substring(range.start, range.end);
 
@@ -167,9 +142,6 @@ const extractWord = (text: string, range: WordRange) =>
 // DOM操作
 // =============================================================================
 
-/**
- * 現在の拡大ラッパーを削除し、元のテキストに戻す
- */
 const removeMagnification = () => {
   const { wrapper } = state;
   if (!wrapper?.parentNode) return;
@@ -179,19 +151,18 @@ const removeMagnification = () => {
   state.wrapper = null;
 };
 
-/**
- * 単語を拡大用spanでラップし、アニメーションを開始する
- */
 const applyMagnification = (textNode: Node, range: WordRange) => {
   const fullText = textNode.textContent ?? '';
   const word = extractWord(fullText, range);
 
-  // ラッパー要素を作成
   const wrapper = document.createElement('span');
   wrapper.className = MAGNIFIER_CLASS;
   wrapper.textContent = word;
 
-  // フラグメントを構築: [前のテキスト] + [ラッパー] + [後のテキスト]
+  /**
+   * DocumentFragmentを使用することで、DOM操作を1回にまとめ、
+   * リフローの発生回数を最小化してパフォーマンスを向上させる
+   */
   const fragment = document.createDocumentFragment();
 
   const textBefore = fullText.substring(0, range.start);
@@ -201,10 +172,12 @@ const applyMagnification = (textNode: Node, range: WordRange) => {
   fragment.appendChild(wrapper);
   if (textAfter) fragment.appendChild(createTextNode(textAfter));
 
-  // 元のテキストノードをフラグメントで置換
   (textNode as ChildNode).replaceWith(fragment);
 
-  // リフローを発生させてからアニメーションを開始
+  /**
+   * offsetHeightの参照でリフローを強制発生させることで、
+   * 直後のクラス追加によるCSSトランジションを確実に発火させる
+   */
   void wrapper.offsetHeight;
   wrapper.classList.add(MAGNIFIED_CLASS);
 
@@ -215,13 +188,9 @@ const applyMagnification = (textNode: Node, range: WordRange) => {
 // コアロジック
 // =============================================================================
 
-/**
- * 現在のマウス位置を処理し、適切な場合に拡大を適用する
- */
 const processPosition = (x: number, y: number) => {
   const caretInfo = getCaretInfoAtPoint(x, y);
 
-  // 位置にキャレットが見つからない
   if (!caretInfo) {
     removeMagnification();
     return;
@@ -229,7 +198,6 @@ const processPosition = (x: number, y: number) => {
 
   const { node, offset } = caretInfo;
 
-  // 有効なテキストノードではない
   if (!isValidTextNode(node)) {
     removeMagnification();
     return;
@@ -238,7 +206,6 @@ const processPosition = (x: number, y: number) => {
   const text = node.textContent ?? '';
   const wordRange = findWordRange(text, offset);
 
-  // カーソル位置に単語がない
   if (!wordRange) {
     removeMagnification();
     return;
@@ -246,10 +213,9 @@ const processPosition = (x: number, y: number) => {
 
   const word = extractWord(text, wordRange);
 
-  // 同じ単語が既に拡大中ならスキップ
+  // 同じ単語への不要なDOM操作を避け、パフォーマンスを維持する
   if (state.wrapper?.textContent === word) return;
 
-  // 新しい拡大を適用
   removeMagnification();
   state.wrapper = applyMagnification(node, wordRange);
 };
@@ -259,10 +225,10 @@ const processPosition = (x: number, y: number) => {
 // =============================================================================
 
 /**
- * マウス移動を処理する（アニメーションフレームでスロットリング）
+ * mousemoveは高頻度で発火するため、requestAnimationFrameで
+ * ブラウザの描画タイミングに合わせてスロットリングする
  */
 const handleMouseMove = (event: MouseEvent) => {
-  // 処理中ならスキップ
   if (state.animationFrameId !== null) return;
 
   state.animationFrameId = requestAnimationFrame(() => {
@@ -271,11 +237,7 @@ const handleMouseMove = (event: MouseEvent) => {
   });
 };
 
-/**
- * マウスがドキュメントから離れた時の処理
- */
 const handleMouseLeave = () => {
-  // 保留中のアニメーションフレームをキャンセル
   if (state.animationFrameId !== null) {
     cancelAnimationFrame(state.animationFrameId);
     state.animationFrameId = null;
@@ -288,5 +250,6 @@ const handleMouseLeave = () => {
 // 初期化
 // =============================================================================
 
+// passiveオプションでスクロールパフォーマンスへの影響を防ぐ
 document.addEventListener('mousemove', handleMouseMove, { passive: true });
 document.addEventListener('mouseleave', handleMouseLeave);
