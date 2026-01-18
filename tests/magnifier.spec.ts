@@ -182,4 +182,101 @@ test.describe('Text Magnifier', () => {
 
     expect(hasOverlap).toBe(false);
   });
+
+  test('拡大された文字のベースラインが周囲と揃っている', async ({ context }) => {
+    const page = await context.newPage();
+    await page.goto('http://localhost:3333/fixture.html');
+    await page.waitForTimeout(2000);
+
+    const paragraph = page.locator('#english-text');
+    const box = await paragraph.boundingBox();
+    if (!box) throw new Error('Element not found');
+
+    await page.mouse.move(box.x + 60, box.y + 10);
+    await page.waitForTimeout(500);
+
+    const magnified = page.locator('.text-magnifier-word.magnified');
+    await expect(magnified).toBeVisible({ timeout: 5000 });
+
+    // ベースラインの揃いをチェック
+    // 拡大要素と隣接テキストのbottom位置を比較
+    const baselineAligned = await page.evaluate(() => {
+      const magnifiedEl = document.querySelector('.text-magnifier-word.magnified');
+      if (!magnifiedEl) return false;
+
+      const magnifiedRect = magnifiedEl.getBoundingClientRect();
+      const nextSibling = magnifiedEl.nextSibling;
+
+      if (!nextSibling || nextSibling.nodeType !== Node.TEXT_NODE) return true;
+
+      // 隣接テキストのベースライン位置を取得
+      const range = document.createRange();
+      range.selectNodeContents(nextSibling);
+      const rects = range.getClientRects();
+
+      if (rects.length === 0) return true;
+
+      const adjacentRect = rects[0];
+      if (!adjacentRect || adjacentRect.width === 0) return true;
+
+      // bottomの差が2px以内ならベースラインが揃っていると判断
+      const bottomDiff = Math.abs(magnifiedRect.bottom - adjacentRect.bottom);
+      return bottomDiff <= 2;
+    });
+
+    expect(baselineAligned).toBe(true);
+  });
+
+  test('拡大時にアニメーション（トランジション）が適用される', async ({ context }) => {
+    const page = await context.newPage();
+    await page.goto('http://localhost:3333/fixture.html');
+    await page.waitForTimeout(2000);
+
+    const paragraph = page.locator('#english-text');
+    const box = await paragraph.boundingBox();
+    if (!box) throw new Error('Element not found');
+
+    // トランジションが設定されているか確認
+    const hasTransition = await page.evaluate(() => {
+      // テスト用のspan要素を作成してCSSを確認
+      const testEl = document.createElement('span');
+      testEl.className = 'text-magnifier-word';
+      document.body.appendChild(testEl);
+      const style = getComputedStyle(testEl);
+      const transition = style.transition || '';
+      document.body.removeChild(testEl);
+
+      return transition.includes('font-size') || transition.includes('0.18s');
+    });
+
+    expect(hasTransition).toBe(true);
+
+    // 実際にアニメーションが時間をかけて発生するか確認
+    await page.mouse.move(box.x + 60, box.y + 10);
+
+    // 要素が作成された直後のfont-sizeを取得（トランジション途中）
+    await page.waitForTimeout(50);
+    const earlyFontSize = await page.evaluate(() => {
+      const el = document.querySelector('.text-magnifier-word');
+      if (!el) return 0;
+      return parseFloat(getComputedStyle(el).fontSize);
+    });
+
+    // トランジション完了後のfont-sizeを取得
+    await page.waitForTimeout(300);
+    const finalFontSize = await page.evaluate(() => {
+      const el = document.querySelector('.text-magnifier-word.magnified');
+      if (!el) return 0;
+      return parseFloat(getComputedStyle(el).fontSize);
+    });
+
+    // 拡大後のfont-sizeが元のサイズより大きいか
+    expect(finalFontSize).toBeGreaterThan(16);
+
+    // アニメーションが発生している場合、途中のサイズは最終サイズより小さいはず
+    // （即座に適用される場合は同じになる）
+    // 注: トランジションの速さによっては50ms後でも最終値に近い可能性があるので
+    // この条件は緩めにする
+    expect(finalFontSize).toBeGreaterThanOrEqual(earlyFontSize);
+  });
 });

@@ -266,6 +266,12 @@ const applyMagnification = (textNode: Node, range: TextRange) => {
   wrapper.style.setProperty('--magnifier-margin', '0.08em');
   wrapper.style.setProperty('--magnifier-scale', `${config.scaleFactor}em`);
 
+  /**
+   * offsetHeightの参照でリフローを強制発生させることで、
+   * 直後のクラス追加によるCSSトランジションを確実に発火させる
+   */
+  void wrapper.offsetHeight;
+
   wrapper.classList.add(MAGNIFIED_CLASS);
 
   return wrapper;
