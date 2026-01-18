@@ -1,9 +1,15 @@
 name: Release Please
 
 on:
+  # PRは常に更新（CHANGELOGを最新に保つ）
   push:
     branches:
       - main
+  # 週1リリース（毎週月曜 9:00 JST）
+  schedule:
+    - cron: '0 0 * * 1'
+  # 手動トリガーも可能
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -25,13 +31,14 @@ jobs:
 
   auto-merge:
     needs: release-please
-    if: ${{ needs.release-please.outputs.pr }}
+    # スケジュール実行 or 手動実行時のみ自動マージ
+    if: ${{ needs.release-please.outputs.pr && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Enable auto-merge for release PR
-        run: gh pr merge --auto --squash "${{ fromJson(needs.release-please.outputs.pr).number }}"
+      - name: Merge release PR
+        run: gh pr merge --squash "${{ fromJson(needs.release-please.outputs.pr).number }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
