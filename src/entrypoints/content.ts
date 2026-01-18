@@ -8,12 +8,12 @@ import {
   isStringOrNull,
   isSpotlightMode,
   hexToRgba,
-  positionToRainbowColor,
 } from '../lib/spotlight';
 
 const SPOTLIGHT_ID = 'reading-spotlight';
 const STYLE_ID = 'reading-spotlight-css';
 const CURSOR_HIDE_CLASS = 'reading-spotlight-cursor-hidden';
+const RAINBOW_CLASS = 'reading-spotlight-rainbow';
 const CENTER_DIVISOR = 2;
 const PERCENT_DIVISOR = 100;
 const CURSOR_HIDE_DELAY_MS = 1000;
@@ -30,6 +30,10 @@ const state = {
 
 const buildCSS = () => {
   return `
+    @keyframes rainbow-flow {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
     #${SPOTLIGHT_ID} {
       position: fixed;
       pointer-events: none;
@@ -37,6 +41,25 @@ const buildCSS = () => {
       border-radius: 4px;
       box-shadow: 0 0 0 200vmax rgba(0, 0, 0, var(--dim, 0.25));
       background: var(--color, ${PRESET_COLORS.yellow});
+    }
+    #${SPOTLIGHT_ID}.${RAINBOW_CLASS} {
+      background: linear-gradient(
+        90deg,
+        hsla(0, 100%, 70%, 0.25),
+        hsla(45, 100%, 70%, 0.25),
+        hsla(90, 100%, 70%, 0.25),
+        hsla(135, 100%, 70%, 0.25),
+        hsla(180, 100%, 70%, 0.25),
+        hsla(225, 100%, 70%, 0.25),
+        hsla(270, 100%, 70%, 0.25),
+        hsla(315, 100%, 70%, 0.25),
+        hsla(360, 100%, 70%, 0.25)
+      );
+      background-size: 200% 100%;
+      animation: rainbow-flow 3s linear infinite;
+      box-shadow:
+        0 0 0 200vmax rgba(0, 0, 0, var(--dim, 0.25)),
+        0 0 30px 5px hsla(var(--hue, 180), 100%, 60%, 0.4);
     }
     .${CURSOR_HIDE_CLASS}, .${CURSOR_HIDE_CLASS} * {
       cursor: none !important;
@@ -191,7 +214,7 @@ const getColorValue = (color: string, customColor: string | null): string => {
     return hexToRgba(customColor);
   }
   if (color === 'rainbow') {
-    return positionToRainbowColor(0);
+    return 'transparent';
   }
   return PRESET_COLORS[color as keyof typeof PRESET_COLORS];
 };
@@ -246,12 +269,16 @@ const calculateReadingModeY = (): number => {
   return targetY - state.config.height / CENTER_DIVISOR;
 };
 
-const updateRainbowColor = (element: HTMLDivElement, mouseX: number) => {
-  if (state.config.color !== 'rainbow' || state.config.customColor) {
-    return;
+const updateRainbowEffect = (element: HTMLDivElement, mouseX: number) => {
+  const isRainbow = state.config.color === 'rainbow' && !state.config.customColor;
+
+  if (isRainbow) {
+    element.classList.add(RAINBOW_CLASS);
+    const hue = Math.round((mouseX / window.innerWidth) * 360);
+    element.style.setProperty('--hue', String(hue));
+  } else {
+    element.classList.remove(RAINBOW_CLASS);
   }
-  const xPercent = mouseX / window.innerWidth;
-  element.style.setProperty('--color', positionToRainbowColor(xPercent));
 };
 
 const updateSpotlightPosition = (mouseX: number, mouseY: number) => {
@@ -262,7 +289,7 @@ const updateSpotlightPosition = (mouseX: number, mouseY: number) => {
   const element = getOrCreateSpotlight();
   const left = mouseX - state.config.width / CENTER_DIVISOR;
 
-  updateRainbowColor(element, mouseX);
+  updateRainbowEffect(element, mouseX);
 
   if (state.config.mode === 'reading') {
     element.style.left = `${left}px`;

@@ -412,7 +412,7 @@ test.describe('レインボーカラー', () => {
   test.beforeEach(async ({ extensionContext, page }) => {
     const workers = extensionContext.serviceWorkers();
     const worker = workers[0] ?? (await extensionContext.waitForEvent('serviceworker'));
-    await worker.evaluate(() => chrome.storage.sync.set({ color: 'rainbow' }));
+    await worker.evaluate(() => chrome.storage.sync.set({ color: 'rainbow', customColor: null }));
     await page.goto(DEMO_URL);
     await page.waitForTimeout(500);
   });
@@ -423,26 +423,29 @@ test.describe('レインボーカラー', () => {
     await worker.evaluate(() => chrome.storage.sync.set({ color: 'yellow' }));
   });
 
-  test('マウスX位置で色が変化する', async ({ page }) => {
+  test('レインボークラスが適用されグローの色相が変化する', async ({ page }) => {
     await page.mouse.move(100, 200);
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(300);
 
     const spotlight = page.locator(SPOTLIGHT_SELECTOR);
-    await expect(spotlight).toBeVisible({ timeout: 2000 });
+    await expect(spotlight).toBeVisible({ timeout: 3000 });
 
-    const color1 = await spotlight.evaluate((el) =>
-      el.style.getPropertyValue('--color')
+    const hasRainbowClass = await spotlight.evaluate((el) =>
+      el.classList.contains('reading-spotlight-rainbow')
+    );
+    expect(hasRainbowClass).toBe(true);
+
+    const hue1 = await spotlight.evaluate((el) =>
+      el.style.getPropertyValue('--hue')
     );
 
     await page.mouse.move(700, 200);
     await page.waitForTimeout(100);
 
-    const color2 = await spotlight.evaluate((el) =>
-      el.style.getPropertyValue('--color')
+    const hue2 = await spotlight.evaluate((el) =>
+      el.style.getPropertyValue('--hue')
     );
 
-    expect(color1).toMatch(/hsla/);
-    expect(color2).toMatch(/hsla/);
-    expect(color1).not.toBe(color2);
+    expect(Number(hue1)).toBeLessThan(Number(hue2));
   });
 });
