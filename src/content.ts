@@ -69,12 +69,12 @@ const state: MagnifierState = {
 /**
  * テキストノードを作成する
  */
-const createTextNode = (text: string): Text => document.createTextNode(text);
+const createTextNode = (text: string) => document.createTextNode(text);
 
 /**
  * 文字が単語を構成する文字かどうかを判定する
  */
-const isWordCharacter = (char: string | undefined): boolean =>
+const isWordCharacter = (char: string | undefined) =>
   char !== undefined && WORD_CHARACTER_PATTERN.test(char);
 
 /**
@@ -110,7 +110,7 @@ const getCaretInfoAtPoint = (x: number, y: number): CaretInfo | null => {
 /**
  * 要素が拡大対象外かどうかを判定する
  */
-const isExcludedElement = (element: Element | null): boolean => {
+const isExcludedElement = (element: Element | null) => {
   if (!element) return true;
 
   const tagName = element.tagName.toLowerCase();
@@ -126,7 +126,7 @@ const isExcludedElement = (element: Element | null): boolean => {
 /**
  * ノードが処理可能なテキストノードかどうかを検証する
  */
-const isValidTextNode = (node: Node): boolean =>
+const isValidTextNode = (node: Node) =>
   node.nodeType === Node.TEXT_NODE && !isExcludedElement(node.parentElement);
 
 // =============================================================================
@@ -160,7 +160,7 @@ const findWordRange = (text: string, offset: number): WordRange | null => {
 /**
  * テキストから指定範囲の単語を抽出する
  */
-const extractWord = (text: string, range: WordRange): string =>
+const extractWord = (text: string, range: WordRange) =>
   text.substring(range.start, range.end);
 
 // =============================================================================
@@ -170,7 +170,7 @@ const extractWord = (text: string, range: WordRange): string =>
 /**
  * 現在の拡大ラッパーを削除し、元のテキストに戻す
  */
-const removeMagnification = (): void => {
+const removeMagnification = () => {
   const { wrapper } = state;
   if (!wrapper?.parentNode) return;
 
@@ -182,7 +182,7 @@ const removeMagnification = (): void => {
 /**
  * 単語を拡大用spanでラップし、アニメーションを開始する
  */
-const applyMagnification = (textNode: Node, range: WordRange): HTMLSpanElement => {
+const applyMagnification = (textNode: Node, range: WordRange) => {
   const fullText = textNode.textContent ?? '';
   const word = extractWord(fullText, range);
 
@@ -218,7 +218,7 @@ const applyMagnification = (textNode: Node, range: WordRange): HTMLSpanElement =
 /**
  * 現在のマウス位置を処理し、適切な場合に拡大を適用する
  */
-const processPosition = (x: number, y: number): void => {
+const processPosition = (x: number, y: number) => {
   const caretInfo = getCaretInfoAtPoint(x, y);
 
   // 位置にキャレットが見つからない
@@ -261,7 +261,7 @@ const processPosition = (x: number, y: number): void => {
 /**
  * マウス移動を処理する（アニメーションフレームでスロットリング）
  */
-const handleMouseMove = (event: MouseEvent): void => {
+const handleMouseMove = (event: MouseEvent) => {
   // 処理中ならスキップ
   if (state.animationFrameId !== null) return;
 
@@ -274,7 +274,7 @@ const handleMouseMove = (event: MouseEvent): void => {
 /**
  * マウスがドキュメントから離れた時の処理
  */
-const handleMouseLeave = (): void => {
+const handleMouseLeave = () => {
   // 保留中のアニメーションフレームをキャンセル
   if (state.animationFrameId !== null) {
     cancelAnimationFrame(state.animationFrameId);
