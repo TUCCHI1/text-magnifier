@@ -107,7 +107,6 @@ To customize the shortcut, go to `chrome://extensions/shortcuts`.
 │   ├── description_ja.txt
 │   └── screenshots/
 ├── tests/
-│   ├── fixtures/
 │   └── spotlight.spec.ts
 └── dist/
 ```

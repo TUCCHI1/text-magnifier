@@ -13,7 +13,7 @@ export default defineConfig({
   timeout: 60000,
   reporter: getReporter(),
   webServer: {
-    command: 'npx serve tests -l 3333 --no-clipboard',
+    command: 'npx serve store -l 3333 --no-clipboard',
     port: 3333,
     reuseExistingServer: true,
   },
