@@ -2,8 +2,18 @@ Reading Spotlight creates a colored overlay that follows your cursor, helping yo
 
 The spotlight dims everything outside the focus area, reducing visual noise and making it easier to track lines of text. You can adjust the size, color, and opacity to match your preferences.
 
+Features:
+• Cursor hidden while active (spotlight center = mouse position)
+• Follow Mode: Spotlight follows your mouse cursor
+• Reading Mode: Fixed Y position for focused line reading
+• Rainbow Mode: Dynamic color that changes with mouse position
+• Soft Edge: Blurred boundary to reduce visual stress (research-based)
+• 7 preset colors + custom color picker (Pro)
+
 Includes a keyboard shortcut (Ctrl+Shift+S on Windows/Linux, Cmd+Shift+S on Mac) for quick on/off toggle. You can customize this shortcut at chrome://extensions/shortcuts.
 
-Based on reading aid research from CHI 2023 and the Irlen Method for visual stress reduction.
+Based on academic research:
+• Visual Crowding research (Attention, Perception & Psychophysics, 2023)
+• Irlen Method for visual stress reduction
 
 No data collection, no tracking, no ads. Your settings stay in your browser. The source code is available at https://github.com/TUCCHI1/text-magnifier

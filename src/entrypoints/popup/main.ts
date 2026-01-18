@@ -11,7 +11,22 @@ import {
   isValidHexColor,
 } from '../../lib/spotlight';
 
-const PERCENTAGE_MULTIPLIER = 100;
+// Size presets (research-backed defaults)
+const SIZE_PRESETS = {
+  small: { width: 400, height: 24 },
+  medium: { width: 600, height: 32 },
+  large: { width: 800, height: 44 },
+} as const;
+
+// Intensity presets
+const INTENSITY_PRESETS = {
+  light: 0.15,
+  medium: 0.25,
+  strong: 0.4,
+} as const;
+
+type SizePreset = keyof typeof SIZE_PRESETS;
+type IntensityPreset = keyof typeof INTENSITY_PRESETS;
 
 const getInputElement = (id: string) => {
   const element = document.getElementById(id);
@@ -59,22 +74,27 @@ const elements = {
   widthValue: getSpanElement('width-value'),
   height: getInputElement('height'),
   heightValue: getSpanElement('height-value'),
-  dimOpacity: getInputElement('dimOpacity'),
-  dimValue: getSpanElement('dim-value'),
   fixedYPercent: getInputElement('fixedYPercent'),
   fixedYValue: getSpanElement('fixedY-value'),
   readingModeSettings: getDivElement('readingModeSettings'),
   customColor: getInputElement('customColor'),
+  softEdge: getInputElement('softEdge'),
   proSection: getDivElement('proSection'),
   proStatus: getSpanElement('proStatus'),
   licenseForm: getDivElement('licenseForm'),
   licenseKey: getInputElement('licenseKey'),
   licenseMessage: getDivElement('licenseMessage'),
   activateBtn: getButtonElement('activateBtn'),
+  advancedToggle: getButtonElement('advancedToggle'),
+  advancedSection: getDivElement('advancedSection'),
 };
 
-const colorButtons = document.querySelectorAll<HTMLButtonElement>('.color-option');
+const colorButtons = document.querySelectorAll<HTMLButtonElement>('.color-btn');
 const modeButtons = document.querySelectorAll<HTMLButtonElement>('.mode-btn');
+const sizeButtons = document.querySelectorAll<HTMLButtonElement>('.preset-btn[data-size]');
+const intensityButtons = document.querySelectorAll<HTMLButtonElement>(
+  '.preset-btn[data-intensity]',
+);
 
 const state = {
   pro: { ...DEFAULT_PRO_STATE } as ProState,
@@ -98,32 +118,48 @@ const saveProState = (updates: Partial<ProState>) => {
   return chrome.storage.sync.set(updates);
 };
 
+const findSizePreset = (width: number, height: number): SizePreset | null => {
+  for (const [key, preset] of Object.entries(SIZE_PRESETS)) {
+    if (preset.width === width && preset.height === height) {
+      return key as SizePreset;
+    }
+  }
+  return null;
+};
+
+const findIntensityPreset = (dimOpacity: number): IntensityPreset | null => {
+  for (const [key, value] of Object.entries(INTENSITY_PRESETS)) {
+    if (Math.abs(value - dimOpacity) < 0.01) {
+      return key as IntensityPreset;
+    }
+  }
+  return null;
+};
+
 const updateUI = (config: SpotlightConfig) => {
   elements.enabled.checked = config.enabled;
 
+  // Update sliders
   elements.width.value = String(config.width);
   elements.widthValue.textContent = `${config.width}px`;
 
   elements.height.value = String(config.height);
   elements.heightValue.textContent = `${config.height}px`;
 
-  elements.dimOpacity.value = String(config.dimOpacity);
-  const dimPercentage = Math.round(config.dimOpacity * PERCENTAGE_MULTIPLIER);
-  elements.dimValue.textContent = `${dimPercentage}%`;
+  elements.fixedYPercent.value = String(config.fixedYPercent);
+  elements.fixedYValue.textContent = `${config.fixedYPercent}%`;
 
+  // Update mode buttons
   modeButtons.forEach((button) => {
     const isSelected = button.dataset.mode === config.mode;
     button.classList.toggle('active', isSelected);
   });
 
-  elements.fixedYPercent.value = String(config.fixedYPercent);
-  elements.fixedYValue.textContent = `${config.fixedYPercent}%`;
-
   const isReadingMode = config.mode === 'reading';
   elements.readingModeSettings.classList.toggle('hidden', !isReadingMode);
 
+  // Update color buttons
   const hasCustomColor = config.customColor !== null;
-
   colorButtons.forEach((button) => {
     const isSelected = !hasCustomColor && button.dataset.color === config.color;
     button.classList.toggle('active', isSelected);
@@ -133,19 +169,35 @@ const updateUI = (config: SpotlightConfig) => {
   if (config.customColor) {
     elements.customColor.value = config.customColor;
   }
+
+  // Update size preset buttons
+  const sizePreset = findSizePreset(config.width, config.height);
+  sizeButtons.forEach((button) => {
+    const isSelected = button.dataset.size === sizePreset;
+    button.classList.toggle('active', isSelected);
+  });
+
+  // Update intensity preset buttons
+  const intensityPreset = findIntensityPreset(config.dimOpacity);
+  intensityButtons.forEach((button) => {
+    const isSelected = button.dataset.intensity === intensityPreset;
+    button.classList.toggle('active', isSelected);
+  });
+
+  // Update soft edge toggle
+  elements.softEdge.checked = config.softEdge;
 };
 
 const updateProUI = () => {
   const isPro = state.pro.isPro;
 
   elements.customColor.disabled = !isPro;
-  elements.proSection.classList.toggle('unlocked', isPro);
 
   if (isPro) {
-    elements.proStatus.textContent = '登録済み';
+    elements.proStatus.textContent = '有効';
     elements.licenseForm.classList.add('hidden');
   } else {
-    elements.proStatus.textContent = '未登録';
+    elements.proStatus.textContent = 'カスタム色';
     elements.licenseForm.classList.remove('hidden');
   }
 };
@@ -160,6 +212,13 @@ const onWidthChange = () => {
 
   elements.widthValue.textContent = `${width}px`;
   saveConfig({ width });
+
+  // Update size preset selection
+  const config = { width, height: Number(elements.height.value) };
+  const sizePreset = findSizePreset(config.width, config.height);
+  sizeButtons.forEach((button) => {
+    button.classList.toggle('active', button.dataset.size === sizePreset);
+  });
 };
 
 const onHeightChange = () => {
@@ -168,15 +227,13 @@ const onHeightChange = () => {
 
   elements.heightValue.textContent = `${height}px`;
   saveConfig({ height });
-};
 
-const onDimOpacityChange = () => {
-  const inputValue = Number(elements.dimOpacity.value) || DEFAULT_CONFIG.dimOpacity;
-  const dimOpacity = clamp(inputValue, LIMITS.dimOpacity.min, LIMITS.dimOpacity.max);
-
-  const dimPercentage = Math.round(dimOpacity * PERCENTAGE_MULTIPLIER);
-  elements.dimValue.textContent = `${dimPercentage}%`;
-  saveConfig({ dimOpacity });
+  // Update size preset selection
+  const config = { width: Number(elements.width.value), height };
+  const sizePreset = findSizePreset(config.width, config.height);
+  sizeButtons.forEach((button) => {
+    button.classList.toggle('active', button.dataset.size === sizePreset);
+  });
 };
 
 const onModeChange = (event: Event) => {
@@ -209,6 +266,10 @@ const onFixedYPercentChange = () => {
 
   elements.fixedYValue.textContent = `${fixedYPercent}%`;
   saveConfig({ fixedYPercent });
+};
+
+const onSoftEdgeChange = () => {
+  saveConfig({ softEdge: elements.softEdge.checked });
 };
 
 const onColorChange = (event: Event) => {
@@ -252,21 +313,73 @@ const onCustomColorChange = () => {
   saveConfig({ customColor });
 };
 
+const onSizePresetChange = (event: Event) => {
+  const target = event.currentTarget;
+
+  if (!(target instanceof HTMLButtonElement)) {
+    return;
+  }
+
+  const size = target.dataset.size as SizePreset;
+  const preset = SIZE_PRESETS[size];
+
+  if (!preset) {
+    return;
+  }
+
+  sizeButtons.forEach((button) => {
+    button.classList.toggle('active', button === target);
+  });
+
+  elements.width.value = String(preset.width);
+  elements.widthValue.textContent = `${preset.width}px`;
+  elements.height.value = String(preset.height);
+  elements.heightValue.textContent = `${preset.height}px`;
+
+  saveConfig({ width: preset.width, height: preset.height });
+};
+
+const onIntensityPresetChange = (event: Event) => {
+  const target = event.currentTarget;
+
+  if (!(target instanceof HTMLButtonElement)) {
+    return;
+  }
+
+  const intensity = target.dataset.intensity as IntensityPreset;
+  const dimOpacity = INTENSITY_PRESETS[intensity];
+
+  if (dimOpacity === undefined) {
+    return;
+  }
+
+  intensityButtons.forEach((button) => {
+    button.classList.toggle('active', button === target);
+  });
+
+  saveConfig({ dimOpacity });
+};
+
+const onAdvancedToggle = () => {
+  elements.advancedToggle.classList.toggle('open');
+  elements.advancedSection.classList.toggle('open');
+};
+
 const onActivateLicense = async () => {
   const key = elements.licenseKey.value.trim().toUpperCase();
 
   elements.licenseMessage.textContent = '';
-  elements.licenseMessage.className = '';
+  elements.licenseMessage.className = 'license-message';
 
   if (!key) {
-    elements.licenseMessage.textContent = 'ライセンスキーを入力してください';
-    elements.licenseMessage.className = 'license-error';
+    elements.licenseMessage.textContent = 'キーを入力してください';
+    elements.licenseMessage.classList.add('error');
     return;
   }
 
   if (!validateLicenseKey(key)) {
-    elements.licenseMessage.textContent = '無効なライセンスキーです';
-    elements.licenseMessage.className = 'license-error';
+    elements.licenseMessage.textContent = '無効なキーです';
+    elements.licenseMessage.classList.add('error');
     return;
   }
 
@@ -274,8 +387,8 @@ const onActivateLicense = async () => {
   await saveProState(state.pro);
   updateProUI();
 
-  elements.licenseMessage.textContent = 'Pro版が有効になりました';
-  elements.licenseMessage.className = 'license-success';
+  elements.licenseMessage.textContent = '有効になりました';
+  elements.licenseMessage.classList.add('success');
 };
 
 const initialize = async () => {
@@ -289,10 +402,11 @@ const initialize = async () => {
   elements.enabled.addEventListener('change', onEnabledChange);
   elements.width.addEventListener('input', onWidthChange);
   elements.height.addEventListener('input', onHeightChange);
-  elements.dimOpacity.addEventListener('input', onDimOpacityChange);
   elements.fixedYPercent.addEventListener('input', onFixedYPercentChange);
+  elements.softEdge.addEventListener('change', onSoftEdgeChange);
   elements.customColor.addEventListener('input', onCustomColorChange);
   elements.activateBtn.addEventListener('click', onActivateLicense);
+  elements.advancedToggle.addEventListener('click', onAdvancedToggle);
 
   colorButtons.forEach((button) => {
     button.addEventListener('click', onColorChange);
@@ -300,6 +414,14 @@ const initialize = async () => {
 
   modeButtons.forEach((button) => {
     button.addEventListener('click', onModeChange);
+  });
+
+  sizeButtons.forEach((button) => {
+    button.addEventListener('click', onSizePresetChange);
+  });
+
+  intensityButtons.forEach((button) => {
+    button.addEventListener('click', onIntensityPresetChange);
   });
 };
 

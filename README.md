@@ -4,17 +4,38 @@
 
 A Chrome extension that helps you focus on text by creating a customizable spotlight overlay that follows your mouse cursor.
 
-Based on research from CHI 2023 on reading aids and focus enhancement.
+Based on academic research:
+
+- [Visual Crowding](https://link.springer.com/article/10.3758/s13414-023-02787-1) - Attention, Perception & Psychophysics (2023)
+- [Visual Stress / Irlen Syndrome](https://irlen.com/colored-overlays/) - Colored overlay research
 
 ## Features
 
+### Core Features
+
 - Spotlight overlay that follows mouse movement
+- Cursor hidden while spotlight is active (spotlight center = mouse position)
 - Customizable spotlight size (width and height)
-- Multiple color options (yellow, blue, green, peach, gray, aqua)
+- Multiple color options (yellow, blue, green, peach, gray, aqua, rainbow)
 - Adjustable dim opacity for surrounding areas
-- Smooth cursor tracking with optimized performance
+- Soft edge option to reduce visual stress (research-based)
 - Enable/disable toggle
 - Keyboard shortcut for quick toggle (customizable)
+
+### Reading Mode
+
+- Fixed Y position for focused line reading
+- Only X position follows the mouse
+- Reduces eye strain from return sweeps (based on eye-tracking research)
+
+### Rainbow Mode
+
+- Dynamic color that changes based on mouse X position
+- Adds visual engagement while reading
+
+### Pro Features
+
+- Custom color picker for personalized overlay colors
 
 ## Installation
 

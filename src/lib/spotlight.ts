@@ -10,6 +10,7 @@ export interface SpotlightConfig {
   readonly enabled: boolean;
   readonly mode: SpotlightMode;
   readonly fixedYPercent: number;
+  readonly softEdge: boolean;
 }
 
 export interface ProState {
@@ -36,6 +37,7 @@ export const DEFAULT_CONFIG: SpotlightConfig = {
   enabled: true,
   mode: 'follow',
   fixedYPercent: 40,
+  softEdge: true,
 };
 
 export const DEFAULT_PRO_STATE: ProState = {

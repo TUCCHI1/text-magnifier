@@ -148,6 +148,17 @@ test.describe('Reading Spotlight', () => {
     expect(Math.abs(centerY - 300)).toBeLessThanOrEqual(5);
   });
 
+  test('スポットライト表示中はカーソルが非表示になる', async ({ page }) => {
+    await page.mouse.move(400, 200);
+    await page.waitForTimeout(100);
+
+    const spotlight = page.locator(SPOTLIGHT_SELECTOR);
+    await expect(spotlight).toBeVisible({ timeout: 2000 });
+
+    const cursor = await page.evaluate(() => getComputedStyle(document.body).cursor);
+    expect(cursor).toBe('none');
+  });
+
   test('無効化→有効化でスポットライトが即座に再表示される', async ({ extensionContext, page }) => {
     const article = await page.locator('article p').first().boundingBox();
     expect(article).not.toBeNull();
@@ -370,42 +381,6 @@ test.describe('リーディングモード', () => {
     expect(Math.abs(newCenterY - expectedNewY)).toBeLessThanOrEqual(5);
     expect(newCenterY).not.toEqual(initialCenterY);
   });
-
-  test('マウスが停止するとカーソルが非表示になる', async ({ page }) => {
-    await page.goto(DEMO_URL);
-    await page.waitForTimeout(300);
-
-    await page.mouse.move(400, 200);
-    await page.waitForTimeout(100);
-
-    const spotlight = page.locator(SPOTLIGHT_SELECTOR);
-    await expect(spotlight).toBeVisible({ timeout: 2000 });
-
-    const cursorBefore = await page.evaluate(() => getComputedStyle(document.body).cursor);
-    expect(cursorBefore).not.toBe('none');
-
-    await page.waitForTimeout(1200);
-
-    const cursorAfter = await page.evaluate(() => getComputedStyle(document.body).cursor);
-    expect(cursorAfter).toBe('none');
-  });
-
-  test('マウス移動でカーソルが再表示される', async ({ page }) => {
-    await page.goto(DEMO_URL);
-    await page.waitForTimeout(300);
-
-    await page.mouse.move(400, 200);
-    await page.waitForTimeout(1200);
-
-    const cursorHidden = await page.evaluate(() => getComputedStyle(document.body).cursor);
-    expect(cursorHidden).toBe('none');
-
-    await page.mouse.move(450, 200);
-    await page.waitForTimeout(50);
-
-    const cursorVisible = await page.evaluate(() => getComputedStyle(document.body).cursor);
-    expect(cursorVisible).not.toBe('none');
-  });
 });
 
 test.describe('レインボーカラー', () => {
@@ -431,21 +406,58 @@ test.describe('レインボーカラー', () => {
     await expect(spotlight).toBeVisible({ timeout: 3000 });
 
     const hasRainbowClass = await spotlight.evaluate((el) =>
-      el.classList.contains('reading-spotlight-rainbow')
+      el.classList.contains('reading-spotlight-rainbow'),
     );
     expect(hasRainbowClass).toBe(true);
 
-    const hue1 = await spotlight.evaluate((el) =>
-      el.style.getPropertyValue('--hue')
-    );
+    const hue1 = await spotlight.evaluate((el) => el.style.getPropertyValue('--hue'));
 
     await page.mouse.move(700, 200);
     await page.waitForTimeout(100);
 
-    const hue2 = await spotlight.evaluate((el) =>
-      el.style.getPropertyValue('--hue')
-    );
+    const hue2 = await spotlight.evaluate((el) => el.style.getPropertyValue('--hue'));
 
     expect(Number(hue1)).toBeLessThan(Number(hue2));
+  });
+});
+
+test.describe('ソフトエッジ', () => {
+  test('デフォルトでソフトエッジクラスが適用される', async ({ page }) => {
+    await page.goto(DEMO_URL);
+    await page.waitForTimeout(300);
+
+    await page.mouse.move(400, 200);
+    await page.waitForTimeout(100);
+
+    const spotlight = page.locator(SPOTLIGHT_SELECTOR);
+    await expect(spotlight).toBeVisible({ timeout: 2000 });
+
+    const hasSoftEdgeClass = await spotlight.evaluate((el) =>
+      el.classList.contains('reading-spotlight-soft'),
+    );
+    expect(hasSoftEdgeClass).toBe(true);
+  });
+
+  test('ソフトエッジ無効時はクラスが適用されない', async ({ extensionContext, page }) => {
+    const workers = extensionContext.serviceWorkers();
+    const worker = workers[0] ?? (await extensionContext.waitForEvent('serviceworker'));
+    await worker.evaluate(() => chrome.storage.sync.set({ softEdge: false }));
+
+    await page.goto(DEMO_URL);
+    await page.waitForTimeout(300);
+
+    await page.mouse.move(400, 200);
+    await page.waitForTimeout(100);
+
+    const spotlight = page.locator(SPOTLIGHT_SELECTOR);
+    await expect(spotlight).toBeVisible({ timeout: 2000 });
+
+    const hasSoftEdgeClass = await spotlight.evaluate((el) =>
+      el.classList.contains('reading-spotlight-soft'),
+    );
+    expect(hasSoftEdgeClass).toBe(false);
+
+    // Clean up
+    await worker.evaluate(() => chrome.storage.sync.set({ softEdge: true }));
   });
 });
