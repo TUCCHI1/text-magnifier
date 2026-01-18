@@ -4,9 +4,7 @@
   "version": "0.1.1",
   "description": "Focus on text with a customizable spotlight overlay based on CHI 2023 research",
   "homepage_url": "https://github.com/TUCCHI1/text-magnifier",
-  "permissions": [
-    "storage"
-  ],
+  "permissions": ["storage"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -35,13 +33,8 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "http://*/*",
-        "https://*/*"
-      ],
-      "js": [
-        "content.js"
-      ],
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
       "run_at": "document_idle"
     }
   ]
