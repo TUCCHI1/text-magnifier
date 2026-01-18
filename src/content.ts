@@ -34,20 +34,16 @@ interface Position {
 // Constants
 // =============================================================================
 
-const SPOTLIGHT_ID = 'reading-spotlight-element' as const;
-const CSS_ID = 'reading-spotlight-styles' as const;
+const SPOTLIGHT_ID = 'reading-spotlight' as const;
+const CSS_ID = 'reading-spotlight-css' as const;
 
-/**
- * 視覚ストレス研究に基づくプリセットカラー
- * @see https://irlen.com/colored-overlays/
- */
 const PRESET_COLORS = {
-  yellow: 'rgba(255, 255, 0, 0.22)',      // デフォルト - 最も一般的
-  blue: 'rgba(135, 206, 250, 0.25)',       // 青系 - 視覚ストレス軽減
-  green: 'rgba(144, 238, 144, 0.22)',      // 緑系 - 目に優しい
-  peach: 'rgba(255, 218, 185, 0.25)',      // 桃色 - 暖色系
-  gray: 'rgba(128, 128, 128, 0.20)',       // グレー - 低刺激
-  aqua: 'rgba(127, 255, 212, 0.22)',       // アクア - 視覚ストレス研究で使用
+  yellow: 'rgba(255,255,0,.22)',
+  blue: 'rgba(135,206,250,.25)',
+  green: 'rgba(144,238,144,.22)',
+  peach: 'rgba(255,218,185,.25)',
+  gray: 'rgba(128,128,128,.2)',
+  aqua: 'rgba(127,255,212,.22)',
 } as const;
 
 const DEFAULT_CONFIG: SpotlightConfig = {
@@ -75,19 +71,16 @@ const getSpotlightColor = (): string => {
 };
 
 const generateCSS = (): string => `
-  #${SPOTLIGHT_ID} {
-    position: fixed;
-    pointer-events: none;
-    z-index: 2147483647;
-    border-radius: 4px;
-    box-shadow: 0 0 0 200vmax rgba(0, 0, 0, var(--spotlight-dim, 0.25));
-    background: var(--spotlight-color, ${PRESET_COLORS.yellow});
-    transition:
-      top 0.04s cubic-bezier(0.33, 1, 0.68, 1),
-      left 0.04s cubic-bezier(0.33, 1, 0.68, 1);
-    will-change: top, left;
-  }
-`;
+#${SPOTLIGHT_ID}{
+  position:fixed;
+  pointer-events:none;
+  z-index:2147483647;
+  border-radius:4px;
+  box-shadow:0 0 0 200vmax rgba(0,0,0,var(--dim,.25));
+  background:var(--color,${PRESET_COLORS.yellow});
+  transition:top .04s ease-out,left .04s ease-out;
+  will-change:top,left
+}`;
 
 // =============================================================================
 // Storage
@@ -158,8 +151,8 @@ const createSpotlight = (): HTMLDivElement => {
 const applyConfigToElement = (el: HTMLDivElement): void => {
   el.style.width = `${config.width}px`;
   el.style.height = `${config.height}px`;
-  el.style.setProperty('--spotlight-dim', String(config.dimOpacity));
-  el.style.setProperty('--spotlight-color', getSpotlightColor());
+  el.style.setProperty('--dim', String(config.dimOpacity));
+  el.style.setProperty('--color', getSpotlightColor());
 };
 
 const destroySpotlight = (): void => {

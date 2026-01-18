@@ -9,13 +9,13 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "compile": "tsc",
+    "compile": "esbuild src/content.ts src/popup.ts --outdir=dist --bundle --minify --format=iife --target=chrome120",
     "prebuild": "npm run clean && npm run compile",
-    "build": "cp manifest.json src/popup.html dist/ && cp -r icons dist/",
+    "build": "cp manifest.json dist/ && html-minifier-terser src/popup.html -o dist/popup.html --collapse-whitespace --remove-comments --minify-css true && cp -r icons dist/",
     "postbuild": "cd dist && zip -r reading-spotlight.zip manifest.json content.js popup.html popup.js icons/",
     "clean": "rm -rf dist",
     "copy": "cp manifest.json src/popup.html dist/ && cp -r icons dist/",
-    "watch:ts": "tsc --watch --preserveWatchOutput",
+    "watch:ts": "esbuild src/content.ts src/popup.ts --outdir=dist --bundle --format=iife --target=chrome120 --watch",
     "watch:static": "chokidar 'manifest.json' 'src/popup.html' 'icons/**/*' -c 'npm run copy'",
     "dev": "npm run compile && npm run copy && concurrently -n ts,static -c blue,green 'npm:watch:ts' 'npm:watch:static'",
     "test": "npm run build && playwright test --grep-invert '手動操作'",
@@ -35,6 +35,8 @@
     "@types/chrome": "^0.1.33",
     "chokidar-cli": "^3.0.0",
     "concurrently": "^9.2.1",
+    "esbuild": "^0.27.2",
+    "html-minifier-terser": "^7.2.0",
     "serve": "^14.2.5",
     "typescript": "^5.9.3"
   }

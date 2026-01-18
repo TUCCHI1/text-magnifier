@@ -21,7 +21,7 @@ const test = base.extend<{ context: BrowserContext }>({
   },
 });
 
-const SPOTLIGHT_SELECTOR = '#reading-spotlight-element';
+const SPOTLIGHT_SELECTOR = '#reading-spotlight';
 
 test.describe('Reading Spotlight', () => {
   test('手動操作モード', async ({ context }) => {
