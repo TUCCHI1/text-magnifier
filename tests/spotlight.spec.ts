@@ -132,8 +132,11 @@ test.describe('Reading Spotlight', () => {
   });
 
   test('無効化→有効化でスポットライトが即座に再表示される', async ({ extensionContext, page }) => {
-    const mouseX = 400;
-    const mouseY = 200;
+    const article = await page.locator('article p').first().boundingBox();
+    expect(article).not.toBeNull();
+
+    const mouseX = article!.x + article!.width / 2;
+    const mouseY = article!.y + 20;
 
     await page.mouse.move(mouseX, mouseY);
     await page.waitForTimeout(100);
