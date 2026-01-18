@@ -192,6 +192,18 @@
       .color-aqua {
         background: rgba(127, 255, 212, 0.6);
       }
+      .color-rainbow {
+        background: linear-gradient(
+          90deg,
+          rgba(255, 0, 0, 0.5),
+          rgba(255, 165, 0, 0.5),
+          rgba(255, 255, 0, 0.5),
+          rgba(0, 255, 0, 0.5),
+          rgba(0, 255, 255, 0.5),
+          rgba(0, 0, 255, 0.5),
+          rgba(255, 0, 255, 0.5)
+        );
+      }
 
       /* Custom color (Pro) */
       .custom-color-wrapper {
@@ -454,8 +466,9 @@
         <button class="color-option color-peach" data-color="peach" title="ピーチ"></button>
         <button class="color-option color-gray" data-color="gray" title="グレー"></button>
         <button class="color-option color-aqua" data-color="aqua" title="アクア"></button>
+        <button class="color-option color-rainbow" data-color="rainbow" title="レインボー"></button>
       </div>
-      <div class="hint">視覚ストレス研究に基づく色</div>
+      <div class="hint">レインボー: マウス位置で色が変化</div>
       <div class="custom-color-wrapper">
         <input type="color" id="customColor" class="custom-color-input" value="#ffff00" disabled />
         <span class="custom-color-label">カスタム色</span>

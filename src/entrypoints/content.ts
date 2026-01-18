@@ -8,6 +8,7 @@ import {
   isStringOrNull,
   isSpotlightMode,
   hexToRgba,
+  positionToRainbowColor,
 } from '../lib/spotlight';
 
 const SPOTLIGHT_ID = 'reading-spotlight';
@@ -189,6 +190,9 @@ const getColorValue = (color: string, customColor: string | null): string => {
   if (customColor) {
     return hexToRgba(customColor);
   }
+  if (color === 'rainbow') {
+    return positionToRainbowColor(0);
+  }
   return PRESET_COLORS[color as keyof typeof PRESET_COLORS];
 };
 
@@ -242,6 +246,14 @@ const calculateReadingModeY = (): number => {
   return targetY - state.config.height / CENTER_DIVISOR;
 };
 
+const updateRainbowColor = (element: HTMLDivElement, mouseX: number) => {
+  if (state.config.color !== 'rainbow' || state.config.customColor) {
+    return;
+  }
+  const xPercent = mouseX / window.innerWidth;
+  element.style.setProperty('--color', positionToRainbowColor(xPercent));
+};
+
 const updateSpotlightPosition = (mouseX: number, mouseY: number) => {
   if (!state.config.enabled) {
     return;
@@ -249,6 +261,8 @@ const updateSpotlightPosition = (mouseX: number, mouseY: number) => {
 
   const element = getOrCreateSpotlight();
   const left = mouseX - state.config.width / CENTER_DIVISOR;
+
+  updateRainbowColor(element, mouseX);
 
   if (state.config.mode === 'reading') {
     element.style.left = `${left}px`;

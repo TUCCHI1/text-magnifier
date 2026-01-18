@@ -1,4 +1,4 @@
-export type ColorKey = 'yellow' | 'blue' | 'green' | 'peach' | 'gray' | 'aqua';
+export type ColorKey = 'yellow' | 'blue' | 'green' | 'peach' | 'gray' | 'aqua' | 'rainbow';
 export type SpotlightMode = 'follow' | 'reading';
 
 export interface SpotlightConfig {
@@ -24,6 +24,7 @@ export const PRESET_COLORS = {
   peach: 'rgba(255,218,185,.25)',
   gray: 'rgba(128,128,128,.2)',
   aqua: 'rgba(127,255,212,.22)',
+  rainbow: 'dynamic',
 } as const satisfies Record<ColorKey, string>;
 
 export const DEFAULT_CONFIG: SpotlightConfig = {
@@ -94,10 +95,17 @@ export const clamp = (value: number, min: number, max: number) => {
 };
 
 const CUSTOM_COLOR_OPACITY = 0.22;
+const RAINBOW_SATURATION = 100;
+const RAINBOW_LIGHTNESS = 70;
 
 export const hexToRgba = (hex: string): string => {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   return `rgba(${r},${g},${b},${CUSTOM_COLOR_OPACITY})`;
+};
+
+export const positionToRainbowColor = (xPercent: number): string => {
+  const hue = Math.round(xPercent * 360);
+  return `hsla(${hue},${RAINBOW_SATURATION}%,${RAINBOW_LIGHTNESS}%,${CUSTOM_COLOR_OPACITY})`;
 };

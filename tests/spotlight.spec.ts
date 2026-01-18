@@ -407,3 +407,42 @@ test.describe('リーディングモード', () => {
     expect(cursorVisible).not.toBe('none');
   });
 });
+
+test.describe('レインボーカラー', () => {
+  test.beforeEach(async ({ extensionContext, page }) => {
+    const workers = extensionContext.serviceWorkers();
+    const worker = workers[0] ?? (await extensionContext.waitForEvent('serviceworker'));
+    await worker.evaluate(() => chrome.storage.sync.set({ color: 'rainbow' }));
+    await page.goto(DEMO_URL);
+    await page.waitForTimeout(500);
+  });
+
+  test.afterEach(async ({ extensionContext }) => {
+    const workers = extensionContext.serviceWorkers();
+    const worker = workers[0] ?? (await extensionContext.waitForEvent('serviceworker'));
+    await worker.evaluate(() => chrome.storage.sync.set({ color: 'yellow' }));
+  });
+
+  test('マウスX位置で色が変化する', async ({ page }) => {
+    await page.mouse.move(100, 200);
+    await page.waitForTimeout(200);
+
+    const spotlight = page.locator(SPOTLIGHT_SELECTOR);
+    await expect(spotlight).toBeVisible({ timeout: 2000 });
+
+    const color1 = await spotlight.evaluate((el) =>
+      el.style.getPropertyValue('--color')
+    );
+
+    await page.mouse.move(700, 200);
+    await page.waitForTimeout(100);
+
+    const color2 = await spotlight.evaluate((el) =>
+      el.style.getPropertyValue('--color')
+    );
+
+    expect(color1).toMatch(/hsla/);
+    expect(color2).toMatch(/hsla/);
+    expect(color1).not.toBe(color2);
+  });
+});
