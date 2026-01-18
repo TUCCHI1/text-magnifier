@@ -4,15 +4,17 @@
   const EXCLUDED_TAGS = new Set(['input', 'textarea', 'script', 'style', 'noscript', 'svg']);
   const WORD_PATTERN = /[\w\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\uAC00-\uD7AF]/;
 
-  let currentWrapper = null;
-  let rafId = null;
+  const state = {
+    currentWrapper: null,
+    rafId: null
+  };
 
   const unwrap = () => {
-    if (!currentWrapper?.parentNode) return;
+    if (!state.currentWrapper?.parentNode) return;
 
-    const text = currentWrapper.textContent;
-    currentWrapper.replaceWith(document.createTextNode(text));
-    currentWrapper = null;
+    const text = state.currentWrapper.textContent;
+    state.currentWrapper.replaceWith(document.createTextNode(text));
+    state.currentWrapper = null;
   };
 
   const shouldExclude = (element) => {
@@ -85,25 +87,25 @@
     const word = textNode.textContent.substring(boundaries.start, boundaries.end);
 
     // Skip if same word is already wrapped
-    if (currentWrapper?.textContent === word) return;
+    if (state.currentWrapper?.textContent === word) return;
 
     unwrap();
-    currentWrapper = wrapWord(textNode, boundaries);
+    state.currentWrapper = wrapWord(textNode, boundaries);
   };
 
   const handleMouseMove = (e) => {
-    if (rafId) return;
+    if (state.rafId) return;
 
-    rafId = requestAnimationFrame(() => {
-      rafId = null;
+    state.rafId = requestAnimationFrame(() => {
+      state.rafId = null;
       processMousePosition(e.clientX, e.clientY);
     });
   };
 
   const handleMouseLeave = () => {
-    if (rafId) {
-      cancelAnimationFrame(rafId);
-      rafId = null;
+    if (state.rafId) {
+      cancelAnimationFrame(state.rafId);
+      state.rafId = null;
     }
     unwrap();
   };
