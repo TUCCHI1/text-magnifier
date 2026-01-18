@@ -67,16 +67,17 @@ const takeScreenshots = async () => {
   await page.goto('http://localhost:3456/demo.html');
   await page.waitForTimeout(3000);
 
-  const p1 = await page.locator('article p').first().boundingBox();
+  await addAnnotation(page, 'Spotlight follows your cursor as you read');
+
+  const p1 = await page.locator('article p').nth(1).boundingBox();
   if (p1) {
     const x = p1.x + p1.width / 2;
-    const y = p1.y + 20;
+    const y = p1.y + 14;
     await triggerMouseMove(page, x, y);
     await waitForSpotlight(page);
     await page.waitForTimeout(300);
   }
 
-  await addAnnotation(page, 'Spotlight follows your cursor as you read');
   await page.waitForTimeout(200);
   await page.screenshot({ path: join(outputDir, 'screenshot-1.png') });
   console.log('Saved: screenshot-1.png');
@@ -84,16 +85,17 @@ const takeScreenshots = async () => {
   await page.goto('http://localhost:3456/demo.html');
   await page.waitForTimeout(3000);
 
-  const p2 = await page.locator('article p').nth(2).boundingBox();
+  await addAnnotation(page, 'Toggle with ⌘ + Shift + S');
+
+  const p2 = await page.locator('article p').nth(3).boundingBox();
   if (p2) {
     const x = p2.x + p2.width / 2;
-    const y = p2.y + 20;
+    const y = p2.y + 14;
     await triggerMouseMove(page, x, y);
     await waitForSpotlight(page);
     await page.waitForTimeout(300);
   }
 
-  await addAnnotation(page, 'Toggle with ⌘ + Shift + S');
   await page.waitForTimeout(200);
   await page.screenshot({ path: join(outputDir, 'screenshot-2.png') });
   console.log('Saved: screenshot-2.png');
