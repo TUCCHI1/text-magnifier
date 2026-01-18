@@ -75,13 +75,14 @@ To customize the shortcut, go to `chrome://extensions/shortcuts`.
 
 ### Scripts
 
-| Command          | Description                           |
-| ---------------- | ------------------------------------- |
-| `npm run dev`    | Start development mode with watch     |
-| `npm run build`  | Build for production                  |
-| `npm run check`  | Run typecheck, lint, and format check |
-| `npm run test`   | Run E2E tests                         |
-| `npm run format` | Format code with Prettier             |
+| Command              | Description                           |
+| -------------------- | ------------------------------------- |
+| `npm run dev`        | Start development mode with watch     |
+| `npm run build`      | Build for production                  |
+| `npm run check`      | Run typecheck, lint, and format check |
+| `npm run test`       | Run E2E tests                         |
+| `npm run format`     | Format code with Prettier             |
+| `npm run screenshots`| Generate Chrome Web Store screenshots |
 
 ### Project Structure
 
@@ -98,6 +99,13 @@ To customize the shortcut, go to `chrome://extensions/shortcuts`.
 │   └── public/
 │       ├── manifest.json
 │       └── icons/
+├── scripts/
+│   └── screenshots.ts
+├── store/
+│   ├── demo.html
+│   ├── description_en.txt
+│   ├── description_ja.txt
+│   └── screenshots/
 ├── tests/
 │   ├── fixtures/
 │   └── spotlight.spec.ts
