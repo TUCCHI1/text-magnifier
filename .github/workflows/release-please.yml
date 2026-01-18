@@ -35,7 +35,7 @@ jobs:
     if: ${{ needs.release-please.outputs.pr && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Merge release PR
         run: gh pr merge --squash "${{ fromJson(needs.release-please.outputs.pr).number }}"
@@ -47,7 +47,7 @@ jobs:
     if: ${{ needs.release-please.outputs.release_created }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v4
         with:
