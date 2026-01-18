@@ -26,13 +26,30 @@
   };
 
   const getWordBoundaries = (text, offset) => {
-    let start = offset;
-    let end = offset;
+    const boundaries = { start: offset, end: offset };
 
-    while (start > 0 && WORD_PATTERN.test(text[start - 1])) start--;
-    while (end < text.length && WORD_PATTERN.test(text[end])) end++;
+    while (boundaries.start > 0 && WORD_PATTERN.test(text[boundaries.start - 1])) {
+      boundaries.start--;
+    }
+    while (boundaries.end < text.length && WORD_PATTERN.test(text[boundaries.end])) {
+      boundaries.end++;
+    }
 
-    return start === end ? null : { start, end };
+    return boundaries.start === boundaries.end ? null : boundaries;
+  };
+
+  // Standard API with fallback for Chrome
+  const getCaretPosition = (x, y) => {
+    // W3C standard (Firefox, future Chrome)
+    if (document.caretPositionFromPoint) {
+      const pos = document.caretPositionFromPoint(x, y);
+      if (!pos) return null;
+      return { node: pos.offsetNode, offset: pos.offset };
+    }
+    // Chrome/Safari proprietary API
+    const range = document.caretRangeFromPoint(x, y);
+    if (!range) return null;
+    return { node: range.startContainer, offset: range.startOffset };
   };
 
   const wrapWord = (textNode, boundaries) => {
@@ -63,14 +80,14 @@
   };
 
   const processMousePosition = (x, y) => {
-    const range = document.caretRangeFromPoint(x, y);
+    const caret = getCaretPosition(x, y);
 
-    if (!range) {
+    if (!caret) {
       unwrap();
       return;
     }
 
-    const { startContainer: textNode, startOffset: offset } = range;
+    const { node: textNode, offset } = caret;
 
     if (textNode.nodeType !== Node.TEXT_NODE || shouldExclude(textNode.parentElement)) {
       unwrap();
