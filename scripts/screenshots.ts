@@ -35,13 +35,18 @@ const waitForSpotlight = async (page: Page) => {
 
 const triggerMouseMove = async (page: Page, x: number, y: number) => {
   await page.mouse.move(x, y);
-  await page.evaluate((coords) => {
-    document.dispatchEvent(new MouseEvent('mousemove', {
-      clientX: coords[0],
-      clientY: coords[1],
-      bubbles: true,
-    }));
-  }, [x, y] as [number, number]);
+  await page.evaluate(
+    (coords) => {
+      document.dispatchEvent(
+        new MouseEvent('mousemove', {
+          clientX: coords[0],
+          clientY: coords[1],
+          bubbles: true,
+        }),
+      );
+    },
+    [x, y] as [number, number],
+  );
 };
 
 const takeScreenshots = async () => {
@@ -53,10 +58,7 @@ const takeScreenshots = async () => {
 
   const context = await chromium.launchPersistentContext('', {
     headless: false,
-    args: [
-      `--disable-extensions-except=${extensionPath}`,
-      `--load-extension=${extensionPath}`,
-    ],
+    args: [`--disable-extensions-except=${extensionPath}`, `--load-extension=${extensionPath}`],
     viewport: { width: 1280, height: 800 },
   });
 
