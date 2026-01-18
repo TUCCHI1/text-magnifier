@@ -1,124 +1,113 @@
-(function() {
+(() => {
   'use strict';
 
+  const EXCLUDED_TAGS = new Set(['input', 'textarea', 'script', 'style', 'noscript', 'svg']);
+  const WORD_PATTERN = /[\w\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\uAC00-\uD7AF]/;
+
   let currentWrapper = null;
-  let lastProcessedTime = 0;
-  const THROTTLE_INTERVAL = 16; // ~60fps
+  let rafId = null;
 
-  // Restore the original text node from wrapper
-  function unwrap() {
-    if (currentWrapper && currentWrapper.parentNode) {
-      const textNode = document.createTextNode(currentWrapper.textContent);
-      currentWrapper.parentNode.replaceChild(textNode, currentWrapper);
-      currentWrapper = null;
-    }
-  }
+  const unwrap = () => {
+    if (!currentWrapper?.parentNode) return;
 
-  // Check if element should be excluded
-  function shouldExclude(element) {
+    const text = currentWrapper.textContent;
+    currentWrapper.replaceWith(document.createTextNode(text));
+    currentWrapper = null;
+  };
+
+  const shouldExclude = (element) => {
     if (!element) return true;
-    const tagName = element.tagName?.toLowerCase();
-    if (tagName === 'input' || tagName === 'textarea' || tagName === 'script' || tagName === 'style') {
-      return true;
-    }
+    if (EXCLUDED_TAGS.has(element.tagName?.toLowerCase())) return true;
     if (element.isContentEditable) return true;
     if (element.closest('.text-magnifier-word')) return true;
     return false;
-  }
+  };
 
-  // Find word boundaries in text
-  function getWordBoundaries(text, offset) {
-    // Pattern for word characters (includes Japanese, Chinese, Korean, and common letters)
-    const wordPattern = /[\w\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\uAC00-\uD7AF]/;
-
+  const getWordBoundaries = (text, offset) => {
     let start = offset;
     let end = offset;
 
-    // Find start of word
-    while (start > 0 && wordPattern.test(text[start - 1])) {
-      start--;
-    }
+    while (start > 0 && WORD_PATTERN.test(text[start - 1])) start--;
+    while (end < text.length && WORD_PATTERN.test(text[end])) end++;
 
-    // Find end of word
-    while (end < text.length && wordPattern.test(text[end])) {
-      end++;
-    }
+    return start === end ? null : { start, end };
+  };
 
-    // If no word found at position, return null
-    if (start === end) return null;
-
-    return { start, end };
-  }
-
-  // Main handler for mouse movement
-  function handleMouseMove(e) {
-    const now = Date.now();
-    if (now - lastProcessedTime < THROTTLE_INTERVAL) return;
-    lastProcessedTime = now;
-
-    // Get the element and text node at cursor position
-    const range = document.caretRangeFromPoint(e.clientX, e.clientY);
-    if (!range) {
-      unwrap();
-      return;
-    }
-
-    const textNode = range.startContainer;
-    const offset = range.startOffset;
-
-    // Only process text nodes
-    if (textNode.nodeType !== Node.TEXT_NODE) {
-      unwrap();
-      return;
-    }
-
-    // Check if parent should be excluded
-    if (shouldExclude(textNode.parentElement)) {
-      unwrap();
-      return;
-    }
-
+  const wrapWord = (textNode, boundaries) => {
     const text = textNode.textContent;
-    const boundaries = getWordBoundaries(text, offset);
-
-    if (!boundaries) {
-      unwrap();
-      return;
-    }
-
     const word = text.substring(boundaries.start, boundaries.end);
-
-    // If already wrapping the same word, do nothing
-    if (currentWrapper && currentWrapper.textContent === word) {
-      return;
-    }
-
-    // Unwrap previous word
-    unwrap();
-
-    // Split text node and wrap the word
-    const beforeText = text.substring(0, boundaries.start);
-    const afterText = text.substring(boundaries.end);
 
     const wrapper = document.createElement('span');
     wrapper.className = 'text-magnifier-word';
     wrapper.textContent = word;
 
     const fragment = document.createDocumentFragment();
-    if (beforeText) fragment.appendChild(document.createTextNode(beforeText));
+
+    if (boundaries.start > 0) {
+      fragment.appendChild(document.createTextNode(text.substring(0, boundaries.start)));
+    }
     fragment.appendChild(wrapper);
-    if (afterText) fragment.appendChild(document.createTextNode(afterText));
+    if (boundaries.end < text.length) {
+      fragment.appendChild(document.createTextNode(text.substring(boundaries.end)));
+    }
 
-    textNode.parentNode.replaceChild(fragment, textNode);
-    currentWrapper = wrapper;
-  }
+    textNode.replaceWith(fragment);
 
-  // Handle mouse leaving the document
-  function handleMouseLeave() {
+    // Trigger reflow then add magnified class for animation
+    wrapper.offsetHeight;
+    wrapper.classList.add('magnified');
+
+    return wrapper;
+  };
+
+  const processMousePosition = (x, y) => {
+    const range = document.caretRangeFromPoint(x, y);
+
+    if (!range) {
+      unwrap();
+      return;
+    }
+
+    const { startContainer: textNode, startOffset: offset } = range;
+
+    if (textNode.nodeType !== Node.TEXT_NODE || shouldExclude(textNode.parentElement)) {
+      unwrap();
+      return;
+    }
+
+    const boundaries = getWordBoundaries(textNode.textContent, offset);
+
+    if (!boundaries) {
+      unwrap();
+      return;
+    }
+
+    const word = textNode.textContent.substring(boundaries.start, boundaries.end);
+
+    // Skip if same word is already wrapped
+    if (currentWrapper?.textContent === word) return;
+
     unwrap();
-  }
+    currentWrapper = wrapWord(textNode, boundaries);
+  };
 
-  // Initialize
+  const handleMouseMove = (e) => {
+    if (rafId) return;
+
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      processMousePosition(e.clientX, e.clientY);
+    });
+  };
+
+  const handleMouseLeave = () => {
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    unwrap();
+  };
+
   document.addEventListener('mousemove', handleMouseMove, { passive: true });
   document.addEventListener('mouseleave', handleMouseLeave);
 })();
