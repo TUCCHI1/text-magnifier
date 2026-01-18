@@ -1,0 +1,17 @@
+{
+  "name": "text-magnifier",
+  "version": "1.0.0",
+  "description": "Chrome extension that magnifies text on hover with smooth animation",
+  "private": true,
+  "scripts": {
+    "build": "mkdir -p dist && zip -r dist/text-magnifier.zip manifest.json content.js content.css icons/",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "chrome-extension",
+    "accessibility",
+    "text-magnifier"
+  ],
+  "author": "",
+  "license": "MIT"
+}
