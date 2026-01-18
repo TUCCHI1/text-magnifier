@@ -30,10 +30,6 @@ const state = {
 
 const buildCSS = () => {
   return `
-    @keyframes rainbow-flow {
-      0% { background-position: 0% 50%; }
-      100% { background-position: 200% 50%; }
-    }
     #${SPOTLIGHT_ID} {
       position: fixed;
       pointer-events: none;
@@ -43,23 +39,7 @@ const buildCSS = () => {
       background: var(--color, ${PRESET_COLORS.yellow});
     }
     #${SPOTLIGHT_ID}.${RAINBOW_CLASS} {
-      background: linear-gradient(
-        90deg,
-        hsla(0, 100%, 70%, 0.25),
-        hsla(45, 100%, 70%, 0.25),
-        hsla(90, 100%, 70%, 0.25),
-        hsla(135, 100%, 70%, 0.25),
-        hsla(180, 100%, 70%, 0.25),
-        hsla(225, 100%, 70%, 0.25),
-        hsla(270, 100%, 70%, 0.25),
-        hsla(315, 100%, 70%, 0.25),
-        hsla(360, 100%, 70%, 0.25)
-      );
-      background-size: 200% 100%;
-      animation: rainbow-flow 3s linear infinite;
-      box-shadow:
-        0 0 0 200vmax rgba(0, 0, 0, var(--dim, 0.25)),
-        0 0 30px 5px hsla(var(--hue, 180), 100%, 60%, 0.4);
+      background: hsla(var(--hue, 180), 80%, 70%, 0.22);
     }
     .${CURSOR_HIDE_CLASS}, .${CURSOR_HIDE_CLASS} * {
       cursor: none !important;
