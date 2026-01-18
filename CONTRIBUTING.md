@@ -10,19 +10,19 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
 ### Types
 
-| Type | Description | Version Bump |
-|------|-------------|--------------|
-| `feat` | New feature | minor |
-| `fix` | Bug fix | patch |
-| `docs` | Documentation only | - |
-| `style` | Formatting (no code change) | - |
-| `refactor` | Code refactoring | - |
-| `perf` | Performance improvement | patch |
-| `test` | Adding/updating tests | - |
-| `build` | Build system changes | - |
-| `ci` | CI configuration | - |
-| `chore` | Other changes | - |
-| `revert` | Revert a commit | - |
+| Type       | Description                 | Version Bump |
+| ---------- | --------------------------- | ------------ |
+| `feat`     | New feature                 | minor        |
+| `fix`      | Bug fix                     | patch        |
+| `docs`     | Documentation only          | -            |
+| `style`    | Formatting (no code change) | -            |
+| `refactor` | Code refactoring            | -            |
+| `perf`     | Performance improvement     | patch        |
+| `test`     | Adding/updating tests       | -            |
+| `build`    | Build system changes        | -            |
+| `ci`       | CI configuration            | -            |
+| `chore`    | Other changes               | -            |
+| `revert`   | Revert a commit             | -            |
 
 ### Breaking Changes
 
