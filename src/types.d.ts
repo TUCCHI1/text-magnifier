@@ -1,10 +1,10 @@
 /**
- * Type extensions for browser APIs
+ * ブラウザAPI型拡張
  */
 
 /**
- * Extend Document interface to include Chrome's proprietary caretRangeFromPoint
- * This API is non-standard but necessary for Chrome/Safari support
+ * Chrome/Safari独自のcaretRangeFromPoint APIをDocument型に追加
+ * 非標準だがChrome/Safariでのテキスト位置取得に必要
  */
 interface Document {
   caretRangeFromPoint(x: number, y: number): Range | null;

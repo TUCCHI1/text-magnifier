@@ -1,37 +1,37 @@
 /**
- * Text Magnifier - Chrome Extension
- * Magnifies words on hover with smooth animation
+ * Text Magnifier - Chrome拡張機能
+ * ホバーした単語をアニメーションで拡大表示する
  */
 
 // =============================================================================
-// Types
+// 型定義
 // =============================================================================
 
-/** Application state for tracking the magnified word */
+/** 拡大状態を管理するアプリケーション状態 */
 interface MagnifierState {
-  /** Currently wrapped word element, null if none */
+  /** 現在ラップ中の単語要素（なければnull） */
   wrapper: HTMLSpanElement | null;
-  /** Pending animation frame ID, null if none */
+  /** 保留中のアニメーションフレームID（なければnull） */
   animationFrameId: number | null;
 }
 
-/** Start and end positions of a word within text */
+/** テキスト内の単語の開始・終了位置 */
 interface WordRange {
   start: number;
   end: number;
 }
 
-/** Position information from caret detection */
+/** キャレット位置の情報 */
 interface CaretInfo {
   node: Node;
   offset: number;
 }
 
 // =============================================================================
-// Constants
+// 定数
 // =============================================================================
 
-/** HTML tags that should never be processed */
+/** 処理対象外のHTMLタグ */
 const EXCLUDED_TAGS = new Set([
   'input',
   'textarea',
@@ -41,20 +41,20 @@ const EXCLUDED_TAGS = new Set([
   'svg',
 ]);
 
-/** CSS class applied to magnified words */
+/** 拡大対象の単語に適用するCSSクラス */
 const MAGNIFIER_CLASS = 'text-magnifier-word';
 
-/** CSS class applied when magnification animation starts */
+/** 拡大アニメーション開始時に追加するCSSクラス */
 const MAGNIFIED_CLASS = 'magnified';
 
 /**
- * Pattern matching word characters
- * Includes: ASCII letters/numbers, Japanese (Hiragana, Katakana, Kanji), Korean
+ * 単語を構成する文字のパターン
+ * 対象: ASCII英数字、ひらがな、カタカナ、漢字、ハングル
  */
 const WORD_CHARACTER_PATTERN = /[\w\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\uAC00-\uD7AF]/;
 
 // =============================================================================
-// State
+// 状態
 // =============================================================================
 
 const state: MagnifierState = {
@@ -63,26 +63,26 @@ const state: MagnifierState = {
 };
 
 // =============================================================================
-// DOM Utilities
+// DOMユーティリティ
 // =============================================================================
 
 /**
- * Creates a text node with the given content
+ * テキストノードを作成する
  */
 const createTextNode = (text: string): Text => document.createTextNode(text);
 
 /**
- * Checks if a character is a word character
+ * 文字が単語を構成する文字かどうかを判定する
  */
 const isWordCharacter = (char: string | undefined): boolean =>
   char !== undefined && WORD_CHARACTER_PATTERN.test(char);
 
 /**
- * Gets the caret position at given coordinates
- * Uses W3C standard API with fallback for Chrome/Safari
+ * 指定座標のキャレット位置を取得する
+ * W3C標準APIを優先し、Chrome/Safari用にフォールバック
  */
 const getCaretInfoAtPoint = (x: number, y: number): CaretInfo | null => {
-  // W3C Standard API (Firefox, future browsers)
+  // W3C標準API（Firefox、将来のブラウザ）
   if (document.caretPositionFromPoint) {
     const position = document.caretPositionFromPoint(x, y);
     if (!position) return null;
@@ -93,7 +93,7 @@ const getCaretInfoAtPoint = (x: number, y: number): CaretInfo | null => {
     };
   }
 
-  // Chrome/Safari proprietary API (type declared above)
+  // Chrome/Safari独自API（types.d.tsで型定義済み）
   const range = document.caretRangeFromPoint(x, y);
   if (!range) return null;
 
@@ -104,11 +104,11 @@ const getCaretInfoAtPoint = (x: number, y: number): CaretInfo | null => {
 };
 
 // =============================================================================
-// Element Validation
+// 要素の検証
 // =============================================================================
 
 /**
- * Determines if an element should be excluded from magnification
+ * 要素が拡大対象外かどうかを判定する
  */
 const isExcludedElement = (element: Element | null): boolean => {
   if (!element) return true;
@@ -124,51 +124,51 @@ const isExcludedElement = (element: Element | null): boolean => {
 };
 
 /**
- * Validates that a node is a processable text node
+ * ノードが処理可能なテキストノードかどうかを検証する
  */
 const isValidTextNode = (node: Node): boolean =>
   node.nodeType === Node.TEXT_NODE && !isExcludedElement(node.parentElement);
 
 // =============================================================================
-// Word Detection
+// 単語検出
 // =============================================================================
 
 /**
- * Finds the boundaries of a word at the given offset position
- * Returns null if no word is found at that position
+ * 指定オフセット位置の単語の範囲を検出する
+ * 単語が見つからない場合はnullを返す
  */
 const findWordRange = (text: string, offset: number): WordRange | null => {
   let start = offset;
   let end = offset;
 
-  // Expand backwards to find word start
+  // 前方に拡張して単語の開始位置を探す
   while (start > 0 && isWordCharacter(text[start - 1])) {
     start--;
   }
 
-  // Expand forwards to find word end
+  // 後方に拡張して単語の終了位置を探す
   while (end < text.length && isWordCharacter(text[end])) {
     end++;
   }
 
-  // No word found if boundaries didn't expand
+  // 範囲が拡張されなければ単語なし
   if (start === end) return null;
 
   return { start, end };
 };
 
 /**
- * Extracts a word from text using the given range
+ * テキストから指定範囲の単語を抽出する
  */
 const extractWord = (text: string, range: WordRange): string =>
   text.substring(range.start, range.end);
 
 // =============================================================================
-// DOM Manipulation
+// DOM操作
 // =============================================================================
 
 /**
- * Removes the current magnification wrapper and restores original text
+ * 現在の拡大ラッパーを削除し、元のテキストに戻す
  */
 const removeMagnification = (): void => {
   const { wrapper } = state;
@@ -180,18 +180,18 @@ const removeMagnification = (): void => {
 };
 
 /**
- * Wraps a word in a magnification span and triggers animation
+ * 単語を拡大用spanでラップし、アニメーションを開始する
  */
 const applyMagnification = (textNode: Node, range: WordRange): HTMLSpanElement => {
   const fullText = textNode.textContent ?? '';
   const word = extractWord(fullText, range);
 
-  // Create wrapper element
+  // ラッパー要素を作成
   const wrapper = document.createElement('span');
   wrapper.className = MAGNIFIER_CLASS;
   wrapper.textContent = word;
 
-  // Build fragment: [before text] + [wrapper] + [after text]
+  // フラグメントを構築: [前のテキスト] + [ラッパー] + [後のテキスト]
   const fragment = document.createDocumentFragment();
 
   const textBefore = fullText.substring(0, range.start);
@@ -201,10 +201,10 @@ const applyMagnification = (textNode: Node, range: WordRange): HTMLSpanElement =
   fragment.appendChild(wrapper);
   if (textAfter) fragment.appendChild(createTextNode(textAfter));
 
-  // Replace original text node with fragment
+  // 元のテキストノードをフラグメントで置換
   (textNode as ChildNode).replaceWith(fragment);
 
-  // Trigger reflow to enable CSS transition, then start animation
+  // リフローを発生させてからアニメーションを開始
   void wrapper.offsetHeight;
   wrapper.classList.add(MAGNIFIED_CLASS);
 
@@ -212,16 +212,16 @@ const applyMagnification = (textNode: Node, range: WordRange): HTMLSpanElement =
 };
 
 // =============================================================================
-// Core Logic
+// コアロジック
 // =============================================================================
 
 /**
- * Processes the current mouse position and applies magnification if appropriate
+ * 現在のマウス位置を処理し、適切な場合に拡大を適用する
  */
 const processPosition = (x: number, y: number): void => {
   const caretInfo = getCaretInfoAtPoint(x, y);
 
-  // No caret found at position
+  // 位置にキャレットが見つからない
   if (!caretInfo) {
     removeMagnification();
     return;
@@ -229,7 +229,7 @@ const processPosition = (x: number, y: number): void => {
 
   const { node, offset } = caretInfo;
 
-  // Not a valid text node
+  // 有効なテキストノードではない
   if (!isValidTextNode(node)) {
     removeMagnification();
     return;
@@ -238,7 +238,7 @@ const processPosition = (x: number, y: number): void => {
   const text = node.textContent ?? '';
   const wordRange = findWordRange(text, offset);
 
-  // No word at cursor position
+  // カーソル位置に単語がない
   if (!wordRange) {
     removeMagnification();
     return;
@@ -246,23 +246,23 @@ const processPosition = (x: number, y: number): void => {
 
   const word = extractWord(text, wordRange);
 
-  // Same word already magnified - skip
+  // 同じ単語が既に拡大中ならスキップ
   if (state.wrapper?.textContent === word) return;
 
-  // Apply new magnification
+  // 新しい拡大を適用
   removeMagnification();
   state.wrapper = applyMagnification(node, wordRange);
 };
 
 // =============================================================================
-// Event Handlers
+// イベントハンドラ
 // =============================================================================
 
 /**
- * Handles mouse movement with animation frame throttling
+ * マウス移動を処理する（アニメーションフレームでスロットリング）
  */
 const handleMouseMove = (event: MouseEvent): void => {
-  // Skip if already processing
+  // 処理中ならスキップ
   if (state.animationFrameId !== null) return;
 
   state.animationFrameId = requestAnimationFrame(() => {
@@ -272,10 +272,10 @@ const handleMouseMove = (event: MouseEvent): void => {
 };
 
 /**
- * Handles mouse leaving the document
+ * マウスがドキュメントから離れた時の処理
  */
 const handleMouseLeave = (): void => {
-  // Cancel pending animation frame
+  // 保留中のアニメーションフレームをキャンセル
   if (state.animationFrameId !== null) {
     cancelAnimationFrame(state.animationFrameId);
     state.animationFrameId = null;
@@ -285,7 +285,7 @@ const handleMouseLeave = (): void => {
 };
 
 // =============================================================================
-// Initialization
+// 初期化
 // =============================================================================
 
 document.addEventListener('mousemove', handleMouseMove, { passive: true });
