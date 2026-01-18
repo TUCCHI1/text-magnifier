@@ -10,5 +10,9 @@
 }
 
 .text-magnifier-word.magnified {
-  transform: scale(1.5);
+  transform: scale(1.5) translateY(-0.3em);
+  background-color: inherit;
+  padding: 0 0.15em;
+  margin: 0 -0.15em;
+  border-radius: 2px;
 }
