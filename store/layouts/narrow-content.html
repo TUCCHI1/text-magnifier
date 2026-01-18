@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>狭いコンテンツレイアウト - Reading Spotlight Test</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+        line-height: 1.8;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 40px 20px;
+      }
+
+      .card {
+        width: 100%;
+        max-width: 450px;
+        background: #fff;
+        border-radius: 16px;
+        padding: 32px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      }
+
+      h1 {
+        font-size: 22px;
+        margin-bottom: 16px;
+        text-align: center;
+      }
+
+      p {
+        margin-bottom: 16px;
+        font-size: 15px;
+      }
+
+      .layout-info {
+        background: #f3e5f5;
+        padding: 10px 14px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        font-size: 13px;
+        text-align: center;
+      }
+
+      .tip {
+        background: #e8eaf6;
+        padding: 14px;
+        border-radius: 8px;
+        margin-top: 20px;
+        font-size: 13px;
+      }
+
+      .tip strong {
+        display: block;
+        margin-bottom: 6px;
+        color: #3f51b5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="layout-info">レイアウト: 狭いコンテンツ（max-width: 450px）</div>
+
+      <article>
+        <h1>コンパクトな読書空間</h1>
+        <p>
+          モバイルデバイスやカード型UIでは、コンテンツエリアが狭くなることがあります。
+          このようなレイアウトでも、Reading Spotlightは効果的に機能します。
+        </p>
+        <p>
+          狭いコンテンツエリアでは、スポットライトの幅をコンテンツに合わせて調整することをお勧めします。
+          デフォルトの600pxは広すぎる場合があるため、300-400px程度に設定すると良いでしょう。
+        </p>
+        <p>
+          リーディングモードでは、マウスでスポットライトの水平位置を調整し、
+          テキストエリアの中央に合わせます。その後はスクロールするだけで読み進められます。
+        </p>
+
+        <div class="tip">
+          <strong>ヒント</strong>
+          コンテンツの幅が狭い場合、スポットライトの周囲の暗さ（ディム）を少し強めに設定すると、
+          背景の色やパターンによる気が散りを防ぐことができます。
+        </div>
+      </article>
+    </div>
+  </body>
+</html>

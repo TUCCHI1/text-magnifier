@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>固定ヘッダーレイアウト - Reading Spotlight Test</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+        line-height: 1.8;
+        color: #333;
+        background: #fff;
+      }
+
+      .fixed-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: #1a237e;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        z-index: 1000;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      .fixed-header h1 {
+        font-size: 18px;
+        font-weight: 500;
+      }
+
+      .fixed-header nav {
+        margin-left: auto;
+        display: flex;
+        gap: 24px;
+      }
+
+      .fixed-header a {
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+        font-size: 14px;
+      }
+
+      .content {
+        margin-top: 60px;
+        padding: 40px 24px;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+
+      p {
+        margin-bottom: 18px;
+        text-align: justify;
+      }
+
+      .layout-info {
+        background: #fff3e0;
+        padding: 12px 16px;
+        border-radius: 4px;
+        margin-bottom: 24px;
+        font-size: 14px;
+      }
+
+      .note {
+        background: #fce4ec;
+        padding: 16px;
+        border-radius: 4px;
+        margin: 24px 0;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="fixed-header">
+      <h1>Reading Spotlight</h1>
+      <nav>
+        <a href="#">ホーム</a>
+        <a href="#">機能</a>
+        <a href="#">ダウンロード</a>
+        <a href="#">サポート</a>
+      </nav>
+    </header>
+
+    <main class="content">
+      <div class="layout-info">レイアウト: 固定ヘッダー（height: 60px）付き</div>
+
+      <article>
+        <h2>固定ヘッダーとリーディングモード</h2>
+        <p>
+          多くのモダンなWebサイトでは、ナビゲーションを常に表示するために固定ヘッダーが採用されています。
+          これにより、ユーザーはページのどこにいても素早くサイト内を移動することができます。
+        </p>
+
+        <div class="note">
+          リーディングモード使用時は、Y位置の設定に注意してください。
+          固定ヘッダーの高さ（60px）を考慮して、スポットライトがヘッダーと重ならないように調整することをお勧めします。
+        </div>
+
+        <p>
+          固定ヘッダーがあるレイアウトでは、コンテンツエリアの開始位置が画面上端よりも下になります。
+          リーディングモードのY位置を適切に設定することで、ヘッダーの下からテキストを読み始めることができます。
+        </p>
+        <p>
+          例えば、Y位置を30-40%程度に設定すると、一般的な固定ヘッダーの下でテキストを読むのに適した位置になります。
+          ただし、最適な位置は個人の好みやヘッダーの高さによって異なります。
+        </p>
+        <p>
+          スクロールしながら読む場合、スポットライトは画面内の固定位置に留まり、
+          テキストがその位置を通過していく形で読書を進めることになります。
+          これにより、目の動きを最小限に抑え、より快適な読書体験を実現できます。
+        </p>
+        <p>
+          固定ヘッダーのあるサイトでの読書は、ヘッダーが常に視界に入るため、
+          集中を妨げる要因になることがあります。
+          スポットライトの周囲を暗くする機能（ディム）を活用することで、
+          この問題を軽減することができます。
+        </p>
+        <p>
+          ディムの不透明度を高めに設定すると、ヘッダーも含めた周囲がより暗くなり、
+          読んでいる行への集中力が高まります。
+          ただし、ナビゲーションが見えにくくなるため、バランスを見ながら調整してください。
+        </p>
+      </article>
+    </main>
+  </body>
+</html>
