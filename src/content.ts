@@ -2,9 +2,15 @@
  * Reading Spotlight - Chrome Extension
  *
  * マウス位置にスポットライトを当て、周囲をディムすることで
- * 読んでいる行に集中させる。CHI 2023研究で最も好まれた「Lightbox」デザイン。
+ * 読んでいる行に集中させる。
+ *
+ * 研究ベース:
+ * - CHI 2023: Lightboxデザインが最も好まれた
+ * - Visual Stress研究: 色の個人差が重要
+ * - Helperbird/Focus Ex: カスタマイズ可能な色が必須機能
  *
  * @see https://dl.acm.org/doi/10.1145/3544548.3581367
+ * @see https://www.tandfonline.com/doi/full/10.1080/08164622.2024.2302822
  */
 
 // =============================================================================
@@ -15,6 +21,7 @@ interface SpotlightConfig {
   readonly width: number;
   readonly height: number;
   readonly dimOpacity: number;
+  readonly color: string;
   readonly enabled: boolean;
 }
 
@@ -30,27 +37,26 @@ interface Position {
 const SPOTLIGHT_ID = 'reading-spotlight-element' as const;
 const CSS_ID = 'reading-spotlight-styles' as const;
 
+/**
+ * 視覚ストレス研究に基づくプリセットカラー
+ * @see https://irlen.com/colored-overlays/
+ */
+const PRESET_COLORS = {
+  yellow: 'rgba(255, 255, 0, 0.22)',      // デフォルト - 最も一般的
+  blue: 'rgba(135, 206, 250, 0.25)',       // 青系 - 視覚ストレス軽減
+  green: 'rgba(144, 238, 144, 0.22)',      // 緑系 - 目に優しい
+  peach: 'rgba(255, 218, 185, 0.25)',      // 桃色 - 暖色系
+  gray: 'rgba(128, 128, 128, 0.20)',       // グレー - 低刺激
+  aqua: 'rgba(127, 255, 212, 0.22)',       // アクア - 視覚ストレス研究で使用
+} as const;
+
 const DEFAULT_CONFIG: SpotlightConfig = {
   width: 600,
   height: 32,
   dimOpacity: 0.25,
+  color: 'yellow',
   enabled: true,
 } as const;
-
-const SPOTLIGHT_CSS = `
-  #${SPOTLIGHT_ID} {
-    position: fixed;
-    pointer-events: none;
-    z-index: 2147483647;
-    border-radius: 4px;
-    box-shadow: 0 0 0 200vmax rgba(0, 0, 0, var(--dim-opacity, 0.25));
-    background: transparent;
-    transition:
-      top 0.04s cubic-bezier(0.33, 1, 0.68, 1),
-      left 0.04s cubic-bezier(0.33, 1, 0.68, 1);
-    will-change: top, left;
-  }
-` as const;
 
 // =============================================================================
 // State
@@ -59,6 +65,29 @@ const SPOTLIGHT_CSS = `
 let config: SpotlightConfig = { ...DEFAULT_CONFIG };
 let spotlightElement: HTMLDivElement | null = null;
 let rafId: number | null = null;
+
+// =============================================================================
+// CSS Generation
+// =============================================================================
+
+const getSpotlightColor = (): string => {
+  return PRESET_COLORS[config.color as keyof typeof PRESET_COLORS] ?? PRESET_COLORS.yellow;
+};
+
+const generateCSS = (): string => `
+  #${SPOTLIGHT_ID} {
+    position: fixed;
+    pointer-events: none;
+    z-index: 2147483647;
+    border-radius: 4px;
+    box-shadow: 0 0 0 200vmax rgba(0, 0, 0, var(--spotlight-dim, 0.25));
+    background: var(--spotlight-color, ${PRESET_COLORS.yellow});
+    transition:
+      top 0.04s cubic-bezier(0.33, 1, 0.68, 1),
+      left 0.04s cubic-bezier(0.33, 1, 0.68, 1);
+    will-change: top, left;
+  }
+`;
 
 // =============================================================================
 // Storage
@@ -71,7 +100,7 @@ const loadConfig = async (): Promise<void> => {
     const stored = await chrome.storage.sync.get(Object.keys(DEFAULT_CONFIG));
     config = { ...DEFAULT_CONFIG, ...stored };
   } catch {
-    // Fallback to defaults on error
+    // Fallback to defaults
   }
 };
 
@@ -107,12 +136,15 @@ const subscribeToConfigChanges = (): void => {
 // =============================================================================
 
 const injectStyles = (): void => {
-  if (document.getElementById(CSS_ID)) return;
+  let styleEl = document.getElementById(CSS_ID) as HTMLStyleElement | null;
 
-  const style = document.createElement('style');
-  style.id = CSS_ID;
-  style.textContent = SPOTLIGHT_CSS;
-  document.head.appendChild(style);
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = CSS_ID;
+    document.head.appendChild(styleEl);
+  }
+
+  styleEl.textContent = generateCSS();
 };
 
 const createSpotlight = (): HTMLDivElement => {
@@ -126,7 +158,8 @@ const createSpotlight = (): HTMLDivElement => {
 const applyConfigToElement = (el: HTMLDivElement): void => {
   el.style.width = `${config.width}px`;
   el.style.height = `${config.height}px`;
-  el.style.setProperty('--dim-opacity', String(config.dimOpacity));
+  el.style.setProperty('--spotlight-dim', String(config.dimOpacity));
+  el.style.setProperty('--spotlight-color', getSpotlightColor());
 };
 
 const destroySpotlight = (): void => {
@@ -150,7 +183,6 @@ const updatePosition = ({ x, y }: Position): void => {
 
   const el = ensureSpotlight();
 
-  // Center the spotlight on cursor position
   const left = x - config.width / 2;
   const top = y - config.height / 2;
 

@@ -1,5 +1,9 @@
 /**
  * Reading Spotlight - Popup UI
+ *
+ * 研究ベース:
+ * - CHI 2023: 色のカスタマイズが重要
+ * - Visual Stress: 個人に最適な色が異なる
  */
 
 // =============================================================================
@@ -10,6 +14,7 @@ interface Config {
   width: number;
   height: number;
   dimOpacity: number;
+  color: string;
   enabled: boolean;
 }
 
@@ -17,6 +22,7 @@ const DEFAULTS: Config = {
   width: 600,
   height: 32,
   dimOpacity: 0.25,
+  color: 'yellow',
   enabled: true,
 };
 
@@ -35,7 +41,10 @@ const elements = {
   heightValue: $<HTMLSpanElement>('height-value'),
   dimOpacity: $<HTMLInputElement>('dimOpacity'),
   dimValue: $<HTMLSpanElement>('dim-value'),
+  colorPicker: $<HTMLDivElement>('color-picker'),
 };
+
+const colorButtons = document.querySelectorAll<HTMLButtonElement>('.color-option');
 
 // =============================================================================
 // Storage
@@ -64,6 +73,11 @@ const updateUI = (config: Config): void => {
 
   elements.dimOpacity.value = String(config.dimOpacity);
   elements.dimValue.textContent = `${Math.round(config.dimOpacity * 100)}%`;
+
+  // Update color selection
+  colorButtons.forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset['color'] === config.color);
+  });
 };
 
 // =============================================================================
@@ -92,6 +106,19 @@ const handleDimChange = (): void => {
   save({ dimOpacity });
 };
 
+const handleColorChange = (event: Event): void => {
+  const target = event.target as HTMLButtonElement;
+  const color = target.dataset['color'];
+
+  if (!color) return;
+
+  colorButtons.forEach((btn) => {
+    btn.classList.toggle('active', btn === target);
+  });
+
+  save({ color });
+};
+
 // =============================================================================
 // Initialize
 // =============================================================================
@@ -104,6 +131,10 @@ const init = async (): Promise<void> => {
   elements.width.addEventListener('input', handleWidthChange);
   elements.height.addEventListener('input', handleHeightChange);
   elements.dimOpacity.addEventListener('input', handleDimChange);
+
+  colorButtons.forEach((btn) => {
+    btn.addEventListener('click', handleColorChange);
+  });
 };
 
 init();

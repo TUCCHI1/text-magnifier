@@ -18,7 +18,7 @@
     }
 
     body {
-      width: 280px;
+      width: 300px;
       padding: 16px;
       font-family: system-ui, -apple-system, sans-serif;
       font-size: 13px;
@@ -132,14 +132,67 @@
       color: var(--text-muted);
     }
 
-    .preview {
+    /* Color Picker */
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+    }
+
+    .color-option {
+      width: 100%;
+      aspect-ratio: 1;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.1s, border-color 0.15s;
+      position: relative;
+    }
+
+    .color-option:hover {
+      transform: scale(1.1);
+    }
+
+    .color-option.active {
+      border-color: var(--primary);
+    }
+
+    .color-option.active::after {
+      content: '✓';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+      color: rgba(0,0,0,0.6);
+    }
+
+    .color-yellow { background: rgba(255, 255, 0, 0.6); }
+    .color-blue { background: rgba(135, 206, 250, 0.7); }
+    .color-green { background: rgba(144, 238, 144, 0.6); }
+    .color-peach { background: rgba(255, 218, 185, 0.7); }
+    .color-gray { background: rgba(128, 128, 128, 0.5); }
+    .color-aqua { background: rgba(127, 255, 212, 0.6); }
+
+    .footer {
       margin-top: 16px;
-      padding: 12px;
-      background: #f8f9fa;
-      border-radius: 6px;
-      font-size: 11px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 10px;
       color: var(--text-muted);
       text-align: center;
+      line-height: 1.4;
+    }
+
+    .footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
@@ -151,6 +204,21 @@
       <span class="toggle-track"></span>
     </label>
   </header>
+
+  <div class="setting">
+    <div class="setting-header">
+      <span class="setting-label">色</span>
+    </div>
+    <div class="color-grid" id="color-picker">
+      <button class="color-option color-yellow active" data-color="yellow" title="イエロー"></button>
+      <button class="color-option color-blue" data-color="blue" title="ブルー"></button>
+      <button class="color-option color-green" data-color="green" title="グリーン"></button>
+      <button class="color-option color-peach" data-color="peach" title="ピーチ"></button>
+      <button class="color-option color-gray" data-color="gray" title="グレー"></button>
+      <button class="color-option color-aqua" data-color="aqua" title="アクア"></button>
+    </div>
+    <div class="hint">視覚ストレス研究に基づく色</div>
+  </div>
 
   <div class="setting">
     <div class="setting-header">
@@ -166,7 +234,6 @@
       <span class="setting-value" id="height-value">32px</span>
     </div>
     <input type="range" id="height" min="20" max="80" step="2" value="32">
-    <div class="hint">読んでいる行の高さに合わせて調整</div>
   </div>
 
   <div class="setting">
@@ -177,8 +244,9 @@
     <input type="range" id="dimOpacity" min="0.1" max="0.5" step="0.05" value="0.25">
   </div>
 
-  <div class="preview">
-    CHI 2023研究で最も好まれた<br>「Lightbox」デザインを採用
+  <div class="footer">
+    研究ベース: <a href="https://dl.acm.org/doi/10.1145/3544548.3581367" target="_blank">CHI 2023</a> /
+    <a href="https://irlen.com/colored-overlays/" target="_blank">Visual Stress</a>
   </div>
 
   <script src="popup.js"></script>
