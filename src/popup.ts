@@ -35,8 +35,7 @@ const clamp = (value: number, min: number, max: number): number =>
 // Elements
 // =============================================================================
 
-const $ = <T extends HTMLElement>(id: string): T =>
-  document.getElementById(id) as T;
+const $ = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 
 const elements = {
   enabled: $<HTMLInputElement>('enabled'),
@@ -59,8 +58,7 @@ const load = async (): Promise<Config> => {
   return { ...DEFAULTS, ...stored };
 };
 
-const save = (updates: Partial<Config>): Promise<void> =>
-  chrome.storage.sync.set(updates);
+const save = (updates: Partial<Config>): Promise<void> => chrome.storage.sync.set(updates);
 
 // =============================================================================
 // UI
@@ -80,7 +78,7 @@ const updateUI = (config: Config): void => {
 
   // Update color selection
   colorButtons.forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset['color'] === config.color);
+    btn.classList.toggle('active', btn.dataset.color === config.color);
   });
 };
 
@@ -112,9 +110,9 @@ const handleDimChange = (): void => {
 
 const handleColorChange = (event: Event): void => {
   const target = event.target as HTMLButtonElement;
-  const color = target.dataset['color'];
+  const color = target.dataset.color;
 
-  if (!color || !VALID_COLORS.includes(color as typeof VALID_COLORS[number])) return;
+  if (!color || !VALID_COLORS.includes(color as (typeof VALID_COLORS)[number])) return;
 
   colorButtons.forEach((btn) => {
     btn.classList.toggle('active', btn === target);

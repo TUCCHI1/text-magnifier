@@ -1,6 +1,6 @@
-import { test as base, expect, chromium, BrowserContext } from '@playwright/test';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { type BrowserContext, test as base, chromium, expect } from '@playwright/test';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -8,13 +8,11 @@ const __dirname = dirname(__filename);
 const extensionPath = join(__dirname, '..', 'dist');
 
 const test = base.extend<{ context: BrowserContext }>({
+  // biome-ignore lint/correctness/noEmptyPattern: Playwright fixture pattern
   context: async ({}, use) => {
     const context = await chromium.launchPersistentContext('', {
       headless: false,
-      args: [
-        `--disable-extensions-except=${extensionPath}`,
-        `--load-extension=${extensionPath}`,
-      ],
+      args: [`--disable-extensions-except=${extensionPath}`, `--load-extension=${extensionPath}`],
     });
     await use(context);
     await context.close();
@@ -98,9 +96,7 @@ test.describe('Reading Spotlight', () => {
     const spotlight = page.locator(SPOTLIGHT_SELECTOR);
     await expect(spotlight).toBeVisible({ timeout: 2000 });
 
-    const pointerEvents = await spotlight.evaluate((el) =>
-      getComputedStyle(el).pointerEvents
-    );
+    const pointerEvents = await spotlight.evaluate((el) => getComputedStyle(el).pointerEvents);
 
     expect(pointerEvents).toBe('none');
   });
@@ -116,9 +112,7 @@ test.describe('Reading Spotlight', () => {
     const spotlight = page.locator(SPOTLIGHT_SELECTOR);
     await expect(spotlight).toBeVisible({ timeout: 2000 });
 
-    const zIndex = await spotlight.evaluate((el) =>
-      parseInt(getComputedStyle(el).zIndex, 10)
-    );
+    const zIndex = await spotlight.evaluate((el) => parseInt(getComputedStyle(el).zIndex, 10));
 
     expect(zIndex).toBe(2147483647);
   });
@@ -135,9 +129,7 @@ test.describe('Reading Spotlight', () => {
     await expect(spotlight).toBeVisible({ timeout: 2000 });
 
     // box-shadowが設定されていることを確認
-    const boxShadow = await spotlight.evaluate((el) =>
-      getComputedStyle(el).boxShadow
-    );
+    const boxShadow = await spotlight.evaluate((el) => getComputedStyle(el).boxShadow);
 
     // box-shadow should contain rgba with some opacity
     expect(boxShadow).toMatch(/rgba?\([^)]+\)/);
@@ -155,9 +147,7 @@ test.describe('Reading Spotlight', () => {
     const spotlight = page.locator(SPOTLIGHT_SELECTOR);
     await expect(spotlight).toBeVisible({ timeout: 2000 });
 
-    const transition = await spotlight.evaluate((el) =>
-      getComputedStyle(el).transition
-    );
+    const transition = await spotlight.evaluate((el) => getComputedStyle(el).transition);
 
     // transition should include top and left
     expect(transition).toMatch(/top|left/);

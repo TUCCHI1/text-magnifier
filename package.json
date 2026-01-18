@@ -9,6 +9,9 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
     "compile": "esbuild src/content.ts src/popup.ts --outdir=dist --bundle --minify --format=iife --target=chrome120",
     "prebuild": "npm run clean && npm run compile",
     "build": "cp manifest.json dist/ && html-minifier-terser src/popup.html -o dist/popup.html --collapse-whitespace --remove-comments --minify-css true && cp -r icons dist/",
@@ -31,6 +34,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@biomejs/biome": "^2.3.11",
     "@playwright/test": "^1.57.0",
     "@types/chrome": "^0.1.33",
     "chokidar-cli": "^3.0.0",
