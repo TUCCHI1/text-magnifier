@@ -14,7 +14,9 @@
     "build": "cp manifest.json content.css dist/ && cp -r icons dist/",
     "postbuild": "cd dist && zip -r text-magnifier.zip manifest.json content.js content.css icons/",
     "clean": "rm -rf dist",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "test": "npm run build && playwright test",
+    "test:headed": "npm run build && playwright test --headed"
   },
   "keywords": [
     "chrome-extension",
@@ -24,7 +26,9 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@types/chrome": "^0.1.33",
+    "serve": "^14.2.5",
     "typescript": "^5.9.3"
   }
 }

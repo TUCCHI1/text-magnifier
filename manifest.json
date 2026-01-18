@@ -5,7 +5,7 @@
   "description": "Hover over text to magnify words with smooth animation",
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": ["http://*/*", "https://*/*"],
       "js": ["content.js"],
       "css": ["content.css"],
       "run_at": "document_idle"
