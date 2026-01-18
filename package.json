@@ -4,22 +4,25 @@
   "description": "Chrome extension that helps focus on text with a customizable spotlight overlay",
   "type": "module",
   "private": true,
+  "packageManager": "npm@11.5.2",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=24.0.0"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "lint": "biome check .",
-    "lint:fix": "biome check --write .",
-    "format": "biome format --write .",
-    "compile": "esbuild src/content.ts src/popup.ts --outdir=dist --bundle --minify --format=iife --target=chrome120",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint --fix .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run typecheck && npm run lint && npm run format:check",
+    "compile": "esbuild src/entrypoints/content.ts --outfile=dist/content.js --bundle --minify --format=iife --target=chrome130 && esbuild src/entrypoints/popup/main.ts --outfile=dist/popup.js --bundle --minify --format=iife --target=chrome130",
     "prebuild": "npm run clean && npm run compile",
-    "build": "cp manifest.json dist/ && html-minifier-terser src/popup.html -o dist/popup.html --collapse-whitespace --remove-comments --minify-css true && cp -r icons dist/",
+    "build": "cp src/public/manifest.json dist/ && html-minifier-terser src/entrypoints/popup/index.html -o dist/popup.html --collapse-whitespace --remove-comments --minify-css true && cp -r src/public/icons dist/",
     "postbuild": "cd dist && zip -r reading-spotlight.zip manifest.json content.js popup.html popup.js icons/",
     "clean": "rm -rf dist",
-    "copy": "cp manifest.json src/popup.html dist/ && cp -r icons dist/",
-    "watch:ts": "esbuild src/content.ts src/popup.ts --outdir=dist --bundle --format=iife --target=chrome120 --watch",
-    "watch:static": "chokidar 'manifest.json' 'src/popup.html' 'icons/**/*' -c 'npm run copy'",
+    "copy": "cp src/public/manifest.json dist/ && cp src/entrypoints/popup/index.html dist/popup.html && cp -r src/public/icons dist/",
+    "watch:ts": "esbuild src/entrypoints/content.ts --outfile=dist/content.js --bundle --format=iife --target=chrome130 --watch & esbuild src/entrypoints/popup/main.ts --outfile=dist/popup.js --bundle --format=iife --target=chrome130 --watch",
+    "watch:static": "chokidar 'src/public/**/*' 'src/entrypoints/popup/index.html' -c 'npm run copy'",
     "dev": "npm run compile && npm run copy && concurrently -n ts,static -c blue,green 'npm:watch:ts' 'npm:watch:static'",
     "test": "npm run build && playwright test --grep-invert '手動操作'",
     "test:headed": "npm run build && playwright test --headed --grep-invert '手動操作'",
@@ -31,16 +34,26 @@
     "reading-aid",
     "focus"
   ],
-  "author": "",
+  "author": "TUCCHI1 <tutikikin1@gmail.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TUCCHI1/text-magnifier.git"
+  },
+  "homepage": "https://github.com/TUCCHI1/text-magnifier#readme",
+  "bugs": {
+    "url": "https://github.com/TUCCHI1/text-magnifier/issues"
+  },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.11",
     "@playwright/test": "^1.57.0",
     "@types/chrome": "^0.1.33",
+    "@types/node": "^25.0.9",
     "chokidar-cli": "^3.0.0",
     "concurrently": "^9.2.1",
     "esbuild": "^0.27.2",
     "html-minifier-terser": "^7.2.0",
+    "oxlint": "^1.39.0",
+    "prettier": "^3.8.0",
     "serve": "^14.2.5",
     "typescript": "^5.9.3"
   }
