@@ -5,9 +5,9 @@ on:
   push:
     branches:
       - main
-  # 週1リリース（毎週月曜 9:00 JST）
+  # 毎日リリース（9:00 JST）
   schedule:
-    - cron: '0 0 * * 1'
+    - cron: '0 0 * * *'
   # 手動トリガーも可能
   workflow_dispatch:
 
