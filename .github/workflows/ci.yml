@@ -3,14 +3,30 @@ name: CI
 on:
   push:
     branches: [main]
+  # Fork PRs: pull_request (安全 - fork のコンテキストで実行)
   pull_request:
     branches: [main]
+  # Same-repo PRs (release-please含む): pull_request_target
+  # GITHUB_TOKENで作成されたPRもトリガーされる
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened]
 
 jobs:
   check:
     runs-on: ubuntu-latest
+    # pull_request: fork PRのみ実行
+    # pull_request_target: same-repo PRのみ実行
+    # push: 常に実行
+    if: |
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) ||
+      (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork == false)
     steps:
       - uses: actions/checkout@v6
+        with:
+          # pull_request_target の場合は PR の head を checkout
+          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || '' }}
 
       - uses: actions/setup-node@v6
         with:
@@ -27,8 +43,14 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) ||
+      (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork == false)
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || '' }}
 
       - uses: actions/setup-node@v6
         with:
@@ -47,8 +69,14 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    if: |
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) ||
+      (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork == false)
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || '' }}
 
       - uses: actions/setup-node@v6
         with:
