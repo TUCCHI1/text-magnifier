@@ -461,3 +461,73 @@ test.describe('ソフトエッジ', () => {
     await worker.evaluate(() => chrome.storage.sync.set({ softEdge: true }));
   });
 });
+
+test.describe('カーソル表示設定', () => {
+  test('デフォルトでカーソルが非表示になる', async ({ page }) => {
+    await page.goto(DEMO_URL);
+    await page.waitForTimeout(300);
+
+    await page.mouse.move(400, 200);
+    await page.waitForTimeout(100);
+
+    const spotlight = page.locator(SPOTLIGHT_SELECTOR);
+    await expect(spotlight).toBeVisible({ timeout: 2000 });
+
+    const cursor = await page.evaluate(() => getComputedStyle(document.body).cursor);
+    expect(cursor).toBe('none');
+  });
+
+  test('hideCursor無効時はカーソルが表示される', async ({ extensionContext, page }) => {
+    const workers = extensionContext.serviceWorkers();
+    const worker = workers[0] ?? (await extensionContext.waitForEvent('serviceworker'));
+    await worker.evaluate(() => chrome.storage.sync.set({ hideCursor: false }));
+
+    await page.goto(DEMO_URL);
+    await page.waitForTimeout(300);
+
+    await page.mouse.move(400, 200);
+    await page.waitForTimeout(100);
+
+    const spotlight = page.locator(SPOTLIGHT_SELECTOR);
+    await expect(spotlight).toBeVisible({ timeout: 2000 });
+
+    const cursor = await page.evaluate(() => getComputedStyle(document.body).cursor);
+    expect(cursor).not.toBe('none');
+
+    // Clean up
+    await worker.evaluate(() => chrome.storage.sync.set({ hideCursor: true }));
+  });
+
+  test('hideCursor切り替えで即座にカーソル表示が変わる', async ({ extensionContext, page }) => {
+    await page.goto(DEMO_URL);
+    await page.waitForTimeout(300);
+
+    await page.mouse.move(400, 200);
+    await page.waitForTimeout(100);
+
+    const spotlight = page.locator(SPOTLIGHT_SELECTOR);
+    await expect(spotlight).toBeVisible({ timeout: 2000 });
+
+    // Initially cursor should be hidden
+    const cursorBefore = await page.evaluate(() => getComputedStyle(document.body).cursor);
+    expect(cursorBefore).toBe('none');
+
+    // Toggle hideCursor to false
+    const workers = extensionContext.serviceWorkers();
+    const worker = workers[0] ?? (await extensionContext.waitForEvent('serviceworker'));
+    await worker.evaluate(() => chrome.storage.sync.set({ hideCursor: false }));
+    await page.waitForTimeout(100);
+
+    // Cursor should now be visible
+    const cursorAfter = await page.evaluate(() => getComputedStyle(document.body).cursor);
+    expect(cursorAfter).not.toBe('none');
+
+    // Toggle back to true
+    await worker.evaluate(() => chrome.storage.sync.set({ hideCursor: true }));
+    await page.waitForTimeout(100);
+
+    // Cursor should be hidden again
+    const cursorFinal = await page.evaluate(() => getComputedStyle(document.body).cursor);
+    expect(cursorFinal).toBe('none');
+  });
+});
