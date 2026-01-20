@@ -2,9 +2,10 @@
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "release-type": "node",
   "packages": {
-    ".": {
+    "packages/chrome": {
       "changelog-path": "CHANGELOG.md",
       "release-type": "node",
+      "component": "chrome",
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
       "extra-files": [
@@ -14,6 +15,20 @@
           "jsonpath": "$.version"
         }
       ]
+    },
+    "packages/vscode": {
+      "changelog-path": "CHANGELOG.md",
+      "release-type": "node",
+      "component": "vscode",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true
+    },
+    "packages/shared": {
+      "changelog-path": "CHANGELOG.md",
+      "release-type": "node",
+      "component": "shared",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true
     }
   }
 }

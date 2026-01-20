@@ -3,11 +3,8 @@ name: CI
 on:
   push:
     branches: [main]
-  # Fork PRs: pull_request (安全 - fork のコンテキストで実行)
   pull_request:
     branches: [main]
-  # Same-repo PRs (release-please含む): pull_request_target
-  # GITHUB_TOKENで作成されたPRもトリガーされる
   pull_request_target:
     branches: [main]
     types: [opened, synchronize, reopened]
@@ -15,9 +12,6 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
-    # pull_request: fork PRのみ実行
-    # pull_request_target: same-repo PRのみ実行
-    # push: 常に実行
     if: |
       github.event_name == 'push' ||
       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) ||
@@ -25,21 +19,22 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          # pull_request_target の場合は PR の head を checkout
           ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || '' }}
+
+      - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 24
-          cache: npm
+          node-version: 22
+          cache: pnpm
 
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
 
-      - run: npm run typecheck
+      - run: pnpm run typecheck
 
-      - run: npm run lint
+      - run: pnpm run lint
 
-      - run: npm run format:check
+      - run: pnpm run format:check
 
   build:
     runs-on: ubuntu-latest
@@ -52,19 +47,26 @@ jobs:
         with:
           ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || '' }}
 
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v6
         with:
-          node-version: 24
-          cache: npm
+          node-version: 22
+          cache: pnpm
 
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
 
-      - run: npm run build
+      - run: pnpm run build
 
       - uses: actions/upload-artifact@v6
         with:
-          name: extension
-          path: dist/reading-spotlight.zip
+          name: chrome-extension
+          path: packages/chrome/dist/reading-spotlight.zip
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: vscode-extension
+          path: packages/vscode/dist/
 
   test:
     runs-on: ubuntu-latest
@@ -78,30 +80,32 @@ jobs:
         with:
           ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || '' }}
 
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v6
         with:
-          node-version: 24
-          cache: npm
+          node-version: 22
+          cache: pnpm
 
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
 
       - name: Cache Playwright Browsers
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Install Playwright Browsers
-        run: npx playwright install chromium --with-deps
+        run: pnpm --filter @reading-spotlight/chrome exec playwright install chromium --with-deps
 
-      - run: npm run build
+      - run: pnpm --filter @reading-spotlight/chrome run build
 
       - name: Run Playwright tests
-        run: xvfb-run npx playwright test --grep-invert '手動操作'
+        run: xvfb-run pnpm --filter @reading-spotlight/chrome exec playwright test --grep-invert '手動操作'
 
       - uses: actions/upload-artifact@v6
         if: ${{ !cancelled() }}
         with:
           name: playwright-report
-          path: playwright-report/
+          path: packages/chrome/playwright-report/
           retention-days: 30
