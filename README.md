@@ -94,6 +94,14 @@ To customize the shortcut, go to `chrome://extensions/shortcuts`.
 - Node.js >= 24.0.0
 - npm >= 11.0.0
 
+### Setup
+
+```bash
+git clone https://github.com/TUCCHI1/text-magnifier.git
+cd text-magnifier
+npm install  # Also installs pre-commit hooks (Husky + lint-staged)
+```
+
 ### Scripts
 
 | Command               | Description                           |
@@ -104,6 +112,12 @@ To customize the shortcut, go to `chrome://extensions/shortcuts`.
 | `npm run test`        | Run E2E tests                         |
 | `npm run format`      | Format code with Prettier             |
 | `npm run screenshots` | Generate Chrome Web Store screenshots |
+
+### CI/CD
+
+- **CI**: Automated checks (typecheck, lint, format, build, test) on every push and PR
+- **Releases**: Automated via [release-please](https://github.com/googleapis/release-please) with daily schedule
+- **Dependencies**: Auto-updated by Dependabot (patch/minor auto-merged)
 
 ### Project Structure
 
@@ -131,6 +145,10 @@ To customize the shortcut, go to `chrome://extensions/shortcuts`.
 │   └── spotlight.spec.ts
 └── dist/
 ```
+
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 

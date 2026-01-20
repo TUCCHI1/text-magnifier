@@ -94,6 +94,14 @@
 - Node.js >= 24.0.0
 - npm >= 11.0.0
 
+### セットアップ
+
+```bash
+git clone https://github.com/TUCCHI1/text-magnifier.git
+cd text-magnifier
+npm install  # pre-commit フック（Husky + lint-staged）も自動インストール
+```
+
 ### スクリプト
 
 | コマンド              | 説明                                     |
@@ -104,6 +112,12 @@
 | `npm run test`        | E2E テスト実行                           |
 | `npm run format`      | Prettier でコードフォーマット            |
 | `npm run screenshots` | ストア用スクリーンショット生成           |
+
+### CI/CD
+
+- **CI**: push/PR ごとに自動チェック（型、リント、フォーマット、ビルド、テスト）
+- **リリース**: [release-please](https://github.com/googleapis/release-please) による自動リリース（毎日実行）
+- **依存関係**: Dependabot による自動更新（patch/minor は自動マージ）
 
 ### プロジェクト構成
 
@@ -131,6 +145,10 @@
 │   └── spotlight.spec.ts
 └── dist/
 ```
+
+## コントリビューション
+
+貢献を歓迎します！ガイドラインは [CONTRIBUTING.md](CONTRIBUTING.md) を参照してください。
 
 ## ライセンス
 
