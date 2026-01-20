@@ -5,26 +5,9 @@ export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    ignores: ['dist/', 'node_modules/'],
+    ignores: ['dist/', 'node_modules/', 'packages/*/dist/'],
   },
   {
-    languageOptions: {
-      globals: {
-        chrome: 'readonly',
-        document: 'readonly',
-        window: 'readonly',
-        HTMLDivElement: 'readonly',
-        HTMLInputElement: 'readonly',
-        HTMLButtonElement: 'readonly',
-        HTMLSpanElement: 'readonly',
-        HTMLStyleElement: 'readonly',
-        MouseEvent: 'readonly',
-        Event: 'readonly',
-        getComputedStyle: 'readonly',
-        requestAnimationFrame: 'readonly',
-        cancelAnimationFrame: 'readonly',
-      },
-    },
     rules: {
       'prefer-const': 'error',
       'no-var': 'error',
@@ -37,13 +20,6 @@ export default tseslint.config(
           message: 'let is not allowed. Use const with object mutation instead.',
         },
       ],
-    },
-  },
-  {
-    files: ['tests/**/*.ts'],
-    rules: {
-      '@typescript-eslint/no-empty-object-type': 'off',
-      'no-empty-pattern': 'off',
     },
   },
 );
