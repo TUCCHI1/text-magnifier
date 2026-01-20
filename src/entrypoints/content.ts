@@ -32,11 +32,14 @@ const buildCSS = () => {
   return `
     #${SPOTLIGHT_ID} {
       position: fixed;
+      left: 0;
+      top: 0;
       pointer-events: none;
       z-index: 2147483647;
       border-radius: 4px;
       box-shadow: 0 0 0 200vmax rgba(0, 0, 0, var(--dim, 0.25));
       background: var(--color, ${PRESET_COLORS.yellow});
+      will-change: transform;
     }
     #${SPOTLIGHT_ID}.${SOFT_EDGE_CLASS} {
       box-shadow: 0 0 ${SOFT_EDGE_BLUR_PX}px 200vmax rgba(0, 0, 0, var(--dim, 0.25));
@@ -269,17 +272,16 @@ const updateSpotlightPosition = (mouseX: number, mouseY: number) => {
   }
 
   const element = getOrCreateSpotlight();
-  const left = mouseX - state.config.width / CENTER_DIVISOR;
+  const x = mouseX - state.config.width / CENTER_DIVISOR;
 
   updateRainbowEffect(element, mouseX);
 
   if (state.config.mode === 'reading') {
-    element.style.left = `${left}px`;
-    element.style.top = `${calculateReadingModeY()}px`;
+    const y = calculateReadingModeY();
+    element.style.transform = `translate(${x}px, ${y}px)`;
   } else {
-    const top = mouseY - state.config.height / CENTER_DIVISOR;
-    element.style.left = `${left}px`;
-    element.style.top = `${top}px`;
+    const y = mouseY - state.config.height / CENTER_DIVISOR;
+    element.style.transform = `translate(${x}px, ${y}px)`;
   }
 };
 
@@ -318,7 +320,9 @@ const onMouseLeave = () => {
 
 const onWindowResize = () => {
   if (state.config.mode === 'reading' && state.element && state.config.enabled) {
-    state.element.style.top = `${calculateReadingModeY()}px`;
+    const x = state.lastMouseX - state.config.width / CENTER_DIVISOR;
+    const y = calculateReadingModeY();
+    state.element.style.transform = `translate(${x}px, ${y}px)`;
   }
 };
 
