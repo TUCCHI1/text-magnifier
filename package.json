@@ -59,9 +59,19 @@
     "eslint": "^9.39.2",
     "html-minifier-terser": "^7.2.0",
     "husky": "^9.1.7",
+    "lint-staged": "^16.0.0",
     "prettier": "^3.8.0",
     "serve": "^14.2.5",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.53.1"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml,html,css}": [
+      "prettier --write"
+    ]
   }
 }
