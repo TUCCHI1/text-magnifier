@@ -1,0 +1,43 @@
+{
+  "name": "@reading-spotlight/chrome",
+  "version": "0.1.3",
+  "description": "Chrome extension that helps focus on text with a customizable spotlight overlay",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "compile": "esbuild src/content.ts --outfile=dist/content.js --bundle --minify --format=iife --target=chrome130 && esbuild src/popup/main.ts --outfile=dist/popup.js --bundle --minify --format=iife --target=chrome130 && esbuild src/background.ts --outfile=dist/background.js --bundle --minify --format=esm --target=chrome130",
+    "prebuild": "pnpm run clean && pnpm run compile",
+    "build": "tsx scripts/inject-version.ts && html-minifier-terser src/popup/index.html -o dist/popup.html --collapse-whitespace --remove-comments --minify-css true && cp -r src/public/icons dist/",
+    "postbuild": "cd dist && zip -r reading-spotlight.zip manifest.json content.js popup.html popup.js background.js icons/",
+    "clean": "rm -rf dist",
+    "copy": "tsx scripts/inject-version.ts && cp src/popup/index.html dist/popup.html && cp -r src/public/icons dist/",
+    "watch:ts": "esbuild src/content.ts --outfile=dist/content.js --bundle --format=iife --target=chrome130 --watch & esbuild src/popup/main.ts --outfile=dist/popup.js --bundle --format=iife --target=chrome130 --watch & esbuild src/background.ts --outfile=dist/background.js --bundle --format=esm --target=chrome130 --watch",
+    "watch:static": "chokidar 'src/public/**/*' 'src/popup/index.html' -c 'pnpm run copy'",
+    "dev": "pnpm run compile && pnpm run copy && concurrently -n ts,static -c blue,green 'pnpm:watch:ts' 'pnpm:watch:static'",
+    "test": "pnpm run build && playwright test --grep-invert '手動操作'",
+    "test:headed": "pnpm run build && playwright test --headed --grep-invert '手動操作'",
+    "test:manual": "pnpm run build && playwright test --headed --grep '手動操作'",
+    "screenshots": "tsx scripts/screenshots.ts"
+  },
+  "dependencies": {
+    "@reading-spotlight/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@playwright/test": "^1.57.0",
+    "@types/chrome": "^0.1.35",
+    "@types/node": "^25.0.9",
+    "chokidar-cli": "^3.0.0",
+    "concurrently": "^9.2.1",
+    "esbuild": "^0.27.2",
+    "eslint": "^9.39.2",
+    "html-minifier-terser": "^7.2.0",
+    "serve": "^14.2.5",
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.53.1"
+  }
+}

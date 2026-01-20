@@ -9,7 +9,7 @@ import {
   clamp,
   validateLicenseKey,
   isValidHexColor,
-} from '../../lib/spotlight';
+} from '@reading-spotlight/shared';
 
 // Size presets (research-backed defaults)
 const SIZE_PRESETS = {

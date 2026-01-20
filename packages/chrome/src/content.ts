@@ -8,7 +8,7 @@ import {
   isStringOrNull,
   isSpotlightMode,
   hexToRgba,
-} from '../lib/spotlight';
+} from '@reading-spotlight/shared';
 
 const SPOTLIGHT_ID = 'reading-spotlight';
 const STYLE_ID = 'reading-spotlight-css';

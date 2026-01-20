@@ -9,6 +9,7 @@ type WorkerFixtures = {
 
 const test = base.extend<object, WorkerFixtures>({
   extensionContext: [
+    // eslint-disable-next-line no-empty-pattern
     async ({}, use) => {
       const context = await chromium.launchPersistentContext('', {
         headless: false,
