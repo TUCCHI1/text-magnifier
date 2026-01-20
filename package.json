@@ -51,7 +51,7 @@
     "@commitlint/config-conventional": "^20.3.1",
     "@eslint/js": "^9.39.2",
     "@playwright/test": "^1.57.0",
-    "@types/chrome": "^0.1.33",
+    "@types/chrome": "^0.1.35",
     "@types/node": "^25.0.9",
     "chokidar-cli": "^3.0.0",
     "concurrently": "^9.2.1",
@@ -62,6 +62,6 @@
     "prettier": "^3.8.0",
     "serve": "^14.2.5",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.53.0"
+    "typescript-eslint": "^8.53.1"
   }
 }
