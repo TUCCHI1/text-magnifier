@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.3](https://github.com/TUCCHI1/text-magnifier/compare/reading-spotlight-v0.1.2...reading-spotlight-v0.1.3) (2026-01-20)
+
+### Features
+
+- add toggle to show/hide cursor while spotlight is active ([b6ae28e](https://github.com/TUCCHI1/text-magnifier/commit/b6ae28ea3713516d562763b1e9704a0636618296))
+
+### Performance Improvements
+
+- fix cursor hide being called on every mousemove ([e8d00d4](https://github.com/TUCCHI1/text-magnifier/commit/e8d00d4474931a6f02d07cce70611966d85fe7e5))
+- use transform: translate() for GPU-accelerated spotlight positioning ([17e68ed](https://github.com/TUCCHI1/text-magnifier/commit/17e68ed91eede174b2bb1c6d194b96a407b0a5b7))
+
 ## [0.1.2](https://github.com/TUCCHI1/text-magnifier/compare/reading-spotlight-v0.1.1...reading-spotlight-v0.1.2) (2026-01-20)
 
 ### Bug Fixes

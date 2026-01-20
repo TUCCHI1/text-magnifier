@@ -1,6 +1,6 @@
 {
   "name": "reading-spotlight",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Chrome extension that helps focus on text with a customizable spotlight overlay",
   "type": "module",
   "private": true,
