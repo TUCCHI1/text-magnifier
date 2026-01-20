@@ -1,0 +1,10 @@
+Line 1: This is a test file
+Line 2: For testing the reading spotlight
+Line 3: VSCode extension
+Line 4: It should highlight
+Line 5: The current line
+Line 6: And dim the others
+Line 7: When enabled
+Line 8: Press Cmd+Shift+R to toggle
+Line 9: Or use the command palette
+Line 10: Reading Spotlight: Toggle
