@@ -12,8 +12,15 @@ node_modules/
 
 # Build artifacts
 dist/
+out/
 *.crx
 *.pem
+
+# Turborepo
+.turbo/
+
+# VSCode Extension Test
+.vscode-test/
 
 # Test
 test-results/
