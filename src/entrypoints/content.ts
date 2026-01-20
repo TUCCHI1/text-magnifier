@@ -80,6 +80,9 @@ const parseConfig = (data: Record<string, unknown>) => {
   if (isBoolean(data.softEdge)) {
     parts.push({ softEdge: data.softEdge });
   }
+  if (isBoolean(data.hideCursor)) {
+    parts.push({ hideCursor: data.hideCursor });
+  }
 
   return Object.assign({}, ...parts);
 };
@@ -144,8 +147,13 @@ const subscribeToStorageChanges = () => {
 
     if (!wasEnabled && state.config.enabled && state.hasMousePosition) {
       updateSpotlightPosition(state.lastMouseX, state.lastMouseY);
-      hideCursor();
+      updateCursorVisibility();
       return;
+    }
+
+    // Handle hideCursor toggle while enabled
+    if (updates.hideCursor !== undefined && state.config.enabled) {
+      updateCursorVisibility();
     }
 
     const modeChanged = previousMode !== state.config.mode;
@@ -225,7 +233,17 @@ const showCursor = () => {
 };
 
 const hideCursor = () => {
-  document.body.classList.add(CURSOR_HIDE_CLASS);
+  if (state.config.hideCursor) {
+    document.body.classList.add(CURSOR_HIDE_CLASS);
+  }
+};
+
+const updateCursorVisibility = () => {
+  if (state.config.enabled && state.config.hideCursor) {
+    document.body.classList.add(CURSOR_HIDE_CLASS);
+  } else {
+    document.body.classList.remove(CURSOR_HIDE_CLASS);
+  }
 };
 
 const calculateReadingModeY = (): number => {

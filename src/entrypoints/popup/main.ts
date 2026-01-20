@@ -79,6 +79,7 @@ const elements = {
   readingModeSettings: getDivElement('readingModeSettings'),
   customColor: getInputElement('customColor'),
   softEdge: getInputElement('softEdge'),
+  hideCursor: getInputElement('hideCursor'),
   proSection: getDivElement('proSection'),
   proStatus: getSpanElement('proStatus'),
   licenseForm: getDivElement('licenseForm'),
@@ -186,6 +187,9 @@ const updateUI = (config: SpotlightConfig) => {
 
   // Update soft edge toggle
   elements.softEdge.checked = config.softEdge;
+
+  // Update hide cursor toggle
+  elements.hideCursor.checked = config.hideCursor;
 };
 
 const updateProUI = () => {
@@ -270,6 +274,10 @@ const onFixedYPercentChange = () => {
 
 const onSoftEdgeChange = () => {
   saveConfig({ softEdge: elements.softEdge.checked });
+};
+
+const onHideCursorChange = () => {
+  saveConfig({ hideCursor: elements.hideCursor.checked });
 };
 
 const onColorChange = (event: Event) => {
@@ -404,6 +412,7 @@ const initialize = async () => {
   elements.height.addEventListener('input', onHeightChange);
   elements.fixedYPercent.addEventListener('input', onFixedYPercentChange);
   elements.softEdge.addEventListener('change', onSoftEdgeChange);
+  elements.hideCursor.addEventListener('change', onHideCursorChange);
   elements.customColor.addEventListener('input', onCustomColorChange);
   elements.activateBtn.addEventListener('click', onActivateLicense);
   elements.advancedToggle.addEventListener('click', onAdvancedToggle);
