@@ -286,10 +286,12 @@ const updateSpotlightPosition = (mouseX: number, mouseY: number) => {
 const onMouseMove = (event: MouseEvent) => {
   state.lastMouseX = event.clientX;
   state.lastMouseY = event.clientY;
-  state.hasMousePosition = true;
 
-  if (state.config.enabled) {
-    hideCursor();
+  if (!state.hasMousePosition) {
+    state.hasMousePosition = true;
+    if (state.config.enabled) {
+      hideCursor();
+    }
   }
 
   if (state.animationFrameId !== null) {
@@ -308,6 +310,7 @@ const onMouseLeave = () => {
     state.animationFrameId = null;
   }
   showCursor();
+  state.hasMousePosition = false;
   if (state.config.mode !== 'reading') {
     removeSpotlight();
   }
