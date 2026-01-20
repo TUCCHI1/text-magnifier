@@ -530,4 +530,93 @@ test.describe('カーソル表示設定', () => {
     const cursorFinal = await page.evaluate(() => getComputedStyle(document.body).cursor);
     expect(cursorFinal).toBe('none');
   });
+
+  test('マウス離脱時はhideCursor設定に関係なくカーソルが表示される', async ({ page }) => {
+    await page.goto(DEMO_URL);
+    await page.waitForTimeout(300);
+
+    await page.mouse.move(400, 200);
+    await page.waitForTimeout(100);
+
+    const spotlight = page.locator(SPOTLIGHT_SELECTOR);
+    await expect(spotlight).toBeVisible({ timeout: 2000 });
+
+    // Cursor should be hidden while mouse is in document
+    const cursorBefore = await page.evaluate(() => getComputedStyle(document.body).cursor);
+    expect(cursorBefore).toBe('none');
+
+    // Mouse leaves document
+    await page.evaluate(() => {
+      document.dispatchEvent(new MouseEvent('mouseleave'));
+    });
+    await page.waitForTimeout(100);
+
+    // Cursor should be visible after mouse leaves
+    const cursorAfter = await page.evaluate(() => getComputedStyle(document.body).cursor);
+    expect(cursorAfter).not.toBe('none');
+  });
+
+  test('スポットライト無効時はhideCursor設定に関係なくカーソルが表示される', async ({
+    extensionContext,
+    page,
+  }) => {
+    await page.goto(DEMO_URL);
+    await page.waitForTimeout(300);
+
+    await page.mouse.move(400, 200);
+    await page.waitForTimeout(100);
+
+    const spotlight = page.locator(SPOTLIGHT_SELECTOR);
+    await expect(spotlight).toBeVisible({ timeout: 2000 });
+
+    // Disable spotlight
+    const workers = extensionContext.serviceWorkers();
+    const worker = workers[0] ?? (await extensionContext.waitForEvent('serviceworker'));
+    await worker.evaluate(() => chrome.storage.sync.set({ enabled: false }));
+    await page.waitForTimeout(100);
+
+    // Cursor should be visible when spotlight is disabled
+    const cursor = await page.evaluate(() => getComputedStyle(document.body).cursor);
+    expect(cursor).not.toBe('none');
+
+    // Clean up
+    await worker.evaluate(() => chrome.storage.sync.set({ enabled: true }));
+  });
+
+  test('hideCursor無効状態で再有効化してもカーソルは表示されたまま', async ({
+    extensionContext,
+    page,
+  }) => {
+    const workers = extensionContext.serviceWorkers();
+    const worker = workers[0] ?? (await extensionContext.waitForEvent('serviceworker'));
+
+    // Set hideCursor to false first
+    await worker.evaluate(() => chrome.storage.sync.set({ hideCursor: false }));
+
+    await page.goto(DEMO_URL);
+    await page.waitForTimeout(300);
+
+    await page.mouse.move(400, 200);
+    await page.waitForTimeout(100);
+
+    const spotlight = page.locator(SPOTLIGHT_SELECTOR);
+    await expect(spotlight).toBeVisible({ timeout: 2000 });
+
+    // Cursor should be visible (hideCursor is false)
+    const cursorBefore = await page.evaluate(() => getComputedStyle(document.body).cursor);
+    expect(cursorBefore).not.toBe('none');
+
+    // Disable then re-enable spotlight
+    await worker.evaluate(() => chrome.storage.sync.set({ enabled: false }));
+    await page.waitForTimeout(100);
+    await worker.evaluate(() => chrome.storage.sync.set({ enabled: true }));
+    await page.waitForTimeout(100);
+
+    // Cursor should still be visible after re-enable
+    const cursorAfter = await page.evaluate(() => getComputedStyle(document.body).cursor);
+    expect(cursorAfter).not.toBe('none');
+
+    // Clean up
+    await worker.evaluate(() => chrome.storage.sync.set({ hideCursor: true }));
+  });
 });
