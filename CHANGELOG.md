@@ -2,11 +2,10 @@
 
 ## [0.1.2](https://github.com/TUCCHI1/text-magnifier/compare/reading-spotlight-v0.1.1...reading-spotlight-v0.1.2) (2026-01-20)
 
-
 ### Bug Fixes
 
-* Enable content script in all frames for iframe support ([f1881fd](https://github.com/TUCCHI1/text-magnifier/commit/f1881fd95c20e128919ace2aafec1ab67c6b3ef2))
-* Use GitHub auto-merge to wait for CI before merging release PR ([c2eb8c0](https://github.com/TUCCHI1/text-magnifier/commit/c2eb8c0ef36546923493df10dfa7938ec239a3d2))
+- Enable content script in all frames for iframe support ([f1881fd](https://github.com/TUCCHI1/text-magnifier/commit/f1881fd95c20e128919ace2aafec1ab67c6b3ef2))
+- Use GitHub auto-merge to wait for CI before merging release PR ([c2eb8c0](https://github.com/TUCCHI1/text-magnifier/commit/c2eb8c0ef36546923493df10dfa7938ec239a3d2))
 
 ## [0.1.1](https://github.com/TUCCHI1/text-magnifier/compare/reading-spotlight-v0.1.0...reading-spotlight-v0.1.1) (2026-01-18)
 
