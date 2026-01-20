@@ -37,8 +37,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Merge release PR
-        run: gh pr merge --squash "${{ fromJson(needs.release-please.outputs.pr).number }}"
+      - name: Enable auto-merge for release PR
+        # --auto: GitHub の Auto-Merge を有効化（CI完了まで自動で待機）
+        # 即座にマージせず、required status checks が通るまで待つ
+        run: gh pr merge --auto --squash "${{ fromJson(needs.release-please.outputs.pr).number }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
