@@ -18,7 +18,6 @@ const SIZE_PRESETS = {
   large: { width: 800, height: 44 },
 } as const;
 
-// Intensity presets
 const INTENSITY_PRESETS = {
   light: 0.15,
   medium: 0.25,
@@ -140,7 +139,6 @@ const findIntensityPreset = (dimOpacity: number): IntensityPreset | null => {
 const updateUI = (config: SpotlightConfig) => {
   elements.enabled.checked = config.enabled;
 
-  // Update sliders
   elements.width.value = String(config.width);
   elements.widthValue.textContent = `${config.width}px`;
 
@@ -150,7 +148,6 @@ const updateUI = (config: SpotlightConfig) => {
   elements.fixedYPercent.value = String(config.fixedYPercent);
   elements.fixedYValue.textContent = `${config.fixedYPercent}%`;
 
-  // Update mode buttons
   modeButtons.forEach((button) => {
     const isSelected = button.dataset.mode === config.mode;
     button.classList.toggle('active', isSelected);
@@ -159,7 +156,6 @@ const updateUI = (config: SpotlightConfig) => {
   const isReadingMode = config.mode === 'reading';
   elements.readingModeSettings.classList.toggle('hidden', !isReadingMode);
 
-  // Update color buttons
   const hasCustomColor = config.customColor !== null;
   colorButtons.forEach((button) => {
     const isSelected = !hasCustomColor && button.dataset.color === config.color;
@@ -171,24 +167,19 @@ const updateUI = (config: SpotlightConfig) => {
     elements.customColor.value = config.customColor;
   }
 
-  // Update size preset buttons
   const sizePreset = findSizePreset(config.width, config.height);
   sizeButtons.forEach((button) => {
     const isSelected = button.dataset.size === sizePreset;
     button.classList.toggle('active', isSelected);
   });
 
-  // Update intensity preset buttons
   const intensityPreset = findIntensityPreset(config.dimOpacity);
   intensityButtons.forEach((button) => {
     const isSelected = button.dataset.intensity === intensityPreset;
     button.classList.toggle('active', isSelected);
   });
 
-  // Update soft edge toggle
   elements.softEdge.checked = config.softEdge;
-
-  // Update hide cursor toggle
   elements.hideCursor.checked = config.hideCursor;
 };
 
@@ -217,7 +208,6 @@ const onWidthChange = () => {
   elements.widthValue.textContent = `${width}px`;
   saveConfig({ width });
 
-  // Update size preset selection
   const config = { width, height: Number(elements.height.value) };
   const sizePreset = findSizePreset(config.width, config.height);
   sizeButtons.forEach((button) => {
@@ -232,7 +222,6 @@ const onHeightChange = () => {
   elements.heightValue.textContent = `${height}px`;
   saveConfig({ height });
 
-  // Update size preset selection
   const config = { width: Number(elements.width.value), height };
   const sizePreset = findSizePreset(config.width, config.height);
   sizeButtons.forEach((button) => {

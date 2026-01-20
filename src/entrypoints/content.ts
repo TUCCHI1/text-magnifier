@@ -151,7 +151,6 @@ const subscribeToStorageChanges = () => {
       return;
     }
 
-    // Handle hideCursor toggle while enabled
     if (updates.hideCursor !== undefined && state.config.enabled) {
       updateCursorVisibility();
     }
