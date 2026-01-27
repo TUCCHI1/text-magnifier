@@ -98,7 +98,7 @@ jobs:
       - name: Install Playwright Browsers
         run: pnpm --filter @reading-spotlight/chrome exec playwright install chromium --with-deps
 
-      - run: pnpm --filter @reading-spotlight/chrome run build
+      - run: pnpm turbo run build --filter=@reading-spotlight/chrome
 
       - name: Run Playwright tests
         run: xvfb-run pnpm --filter @reading-spotlight/chrome exec playwright test --grep-invert '手動操作'
