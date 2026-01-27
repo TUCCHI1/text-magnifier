@@ -57,7 +57,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm --filter @reading-spotlight/chrome run build
+      - run: pnpm turbo run build --filter=@reading-spotlight/chrome
 
       - name: Upload Chrome Extension
         uses: softprops/action-gh-release@v2
