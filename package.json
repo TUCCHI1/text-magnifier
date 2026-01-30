@@ -38,14 +38,14 @@
     "url": "https://github.com/TUCCHI1/text-magnifier/issues"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.3.1",
-    "@commitlint/config-conventional": "^20.3.1",
+    "@commitlint/cli": "^20.4.0",
+    "@commitlint/config-conventional": "^20.4.0",
     "@eslint/js": "^9.39.2",
     "eslint": "^9.39.2",
     "husky": "^9.1.7",
     "lint-staged": "^16.0.0",
     "prettier": "^3.8.1",
-    "turbo": "^2.7.6",
+    "turbo": "^2.8.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.54.0"
   },
