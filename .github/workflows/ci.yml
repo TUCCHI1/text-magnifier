@@ -17,24 +17,19 @@ jobs:
       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) ||
       (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork == false)
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || '' }}
 
-      - uses: pnpm/action-setup@v4
+      - uses: oven-sh/setup-bun@v2
 
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: pnpm
+      - run: bun install --frozen-lockfile
 
-      - run: pnpm install --frozen-lockfile
+      - run: bun run typecheck
 
-      - run: pnpm run typecheck
+      - run: bun run lint
 
-      - run: pnpm run lint
-
-      - run: pnpm run format:check
+      - run: bun run format:check
 
   build:
     runs-on: ubuntu-latest
@@ -43,27 +38,22 @@ jobs:
       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) ||
       (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork == false)
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || '' }}
 
-      - uses: pnpm/action-setup@v4
+      - uses: oven-sh/setup-bun@v2
 
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: pnpm
+      - run: bun install --frozen-lockfile
 
-      - run: pnpm install --frozen-lockfile
+      - run: bun run build
 
-      - run: pnpm run build
-
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v4
         with:
           name: chrome-extension
           path: packages/chrome/dist/reading-spotlight.zip
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v4
         with:
           name: vscode-extension
           path: packages/vscode/dist/
@@ -76,34 +66,29 @@ jobs:
       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) ||
       (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork == false)
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || '' }}
 
-      - uses: pnpm/action-setup@v4
+      - uses: oven-sh/setup-bun@v2
 
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
+      - run: bun install --frozen-lockfile
 
       - name: Cache Playwright Browsers
-        uses: actions/cache@v5
+        uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}
 
       - name: Install Playwright Browsers
-        run: pnpm --filter @reading-spotlight/chrome exec playwright install chromium --with-deps
+        run: bun --filter @reading-spotlight/chrome exec playwright install chromium --with-deps
 
-      - run: pnpm turbo run build --filter=@reading-spotlight/chrome
+      - run: bun run turbo run build --filter=@reading-spotlight/chrome
 
       - name: Run Playwright tests
-        run: xvfb-run pnpm --filter @reading-spotlight/chrome exec playwright test --grep-invert '手動操作'
+        run: xvfb-run bun --filter @reading-spotlight/chrome exec playwright test --grep-invert '手動操作'
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
           name: playwright-report

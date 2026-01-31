@@ -34,7 +34,7 @@ jobs:
     if: ${{ needs.release-please.outputs.pr && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Enable auto-merge for release PR
         run: gh pr merge --auto --squash "${{ fromJson(needs.release-please.outputs.pr).number }}"
@@ -46,18 +46,13 @@ jobs:
     if: ${{ needs.release-please.outputs['chrome--release_created'] }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
+      - uses: oven-sh/setup-bun@v2
 
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: pnpm
+      - run: bun install --frozen-lockfile
 
-      - run: pnpm install --frozen-lockfile
-
-      - run: pnpm turbo run build --filter=@reading-spotlight/chrome
+      - run: bun run turbo run build --filter=@reading-spotlight/chrome
 
       - name: Upload Chrome Extension
         uses: softprops/action-gh-release@v2
@@ -70,20 +65,15 @@ jobs:
     if: ${{ needs.release-please.outputs['vscode--release_created'] }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
+      - uses: oven-sh/setup-bun@v2
 
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: pnpm
+      - run: bun install --frozen-lockfile
 
-      - run: pnpm install --frozen-lockfile
+      - run: bun --filter reading-spotlight-vscode run build
 
-      - run: pnpm --filter reading-spotlight-vscode run build
-
-      - run: pnpm --filter reading-spotlight-vscode run package
+      - run: bun --filter reading-spotlight-vscode run package
 
       - name: Upload VSCode Extension
         uses: softprops/action-gh-release@v2
