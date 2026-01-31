@@ -81,12 +81,12 @@ jobs:
           key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}
 
       - name: Install Playwright Browsers
-        run: bun --filter @reading-spotlight/chrome exec playwright install chromium --with-deps
+        run: cd packages/chrome && bunx playwright install chromium --with-deps
 
       - run: bun run turbo run build --filter=@reading-spotlight/chrome
 
       - name: Run Playwright tests
-        run: xvfb-run bun --filter @reading-spotlight/chrome exec playwright test --grep-invert '手動操作'
+        run: cd packages/chrome && xvfb-run bunx playwright test --grep-invert '手動操作'
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}

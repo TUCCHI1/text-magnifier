@@ -71,9 +71,9 @@ jobs:
 
       - run: bun install --frozen-lockfile
 
-      - run: bun --filter reading-spotlight-vscode run build
+      - run: cd packages/vscode && bun run build
 
-      - run: bun --filter reading-spotlight-vscode run package
+      - run: cd packages/vscode && bun run package
 
       - name: Upload VSCode Extension
         uses: softprops/action-gh-release@v2
