@@ -55,7 +55,7 @@ jobs:
       - run: bun run turbo run build --filter=@reading-spotlight/chrome
 
       - name: Upload Chrome Extension
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.release-please.outputs['chrome--tag_name'] }}
           files: packages/chrome/dist/reading-spotlight.zip
@@ -76,7 +76,7 @@ jobs:
       - run: cd packages/vscode && bun run package
 
       - name: Upload VSCode Extension
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.release-please.outputs['vscode--tag_name'] }}
           files: packages/vscode/*.vsix
