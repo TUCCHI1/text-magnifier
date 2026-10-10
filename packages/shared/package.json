@@ -1,6 +1,6 @@
 {
   "name": "@reading-spotlight/shared",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Shared code for Reading Spotlight extensions",
   "type": "module",
   "main": "./dist/index.js",
