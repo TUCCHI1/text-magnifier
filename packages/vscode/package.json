@@ -2,7 +2,7 @@
   "name": "reading-spotlight-vscode",
   "displayName": "Reading Spotlight",
   "description": "Focus on text with a customizable spotlight overlay - helps with reading and concentration",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "TUCCHI1",
   "repository": {
     "type": "git",
